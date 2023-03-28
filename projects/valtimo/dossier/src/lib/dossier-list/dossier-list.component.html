@@ -113,6 +113,7 @@
             (paginationSet)="pageSizeChange($event)"
             [initialSortState]="pagination.sort"
             (sortChanged)="sortChanged($event)"
+            isSearchable="true"
           >
             <div header>
               <h3 class="list-header-title">
@@ -126,6 +127,36 @@
               <ng-container *ngTemplateOutlet="tabs"></ng-container>
             </div>
           </valtimo-list>
+        </valtimo-widget>
+        <br/><br/>
+        <valtimo-widget *ngIf="obs.loading === false">
+          <valtimo-list-carbon
+                  [items]="documentItems"
+                  [fields]="fields"
+                  (rowClicked)="rowClick($event)"
+                  [pagination]="pagination"
+                  [viewMode]="true"
+                  [header]="true"
+                  paginationIdentifier="dossierList"
+                  (paginationClicked)="pageChange($event)"
+                  (paginationSet)="pageSizeChange($event)"
+                  [initialSortState]="pagination.sort"
+                  (sortChanged)="sortChanged($event)"
+                  [isSearchable]="true"
+                  [striped]="false"
+          >
+            <div header>
+              <h3 class="list-header-title">
+                {{ (schema$ | async)?.title }}
+                <sup class="ml-1 badge badge-pill badge-primary">{{
+                  pagination?.collectionSize || 0
+                  }}</sup>
+              </h3>
+            </div>
+            <div tabs *ngIf="canHaveAssignee$ | async">
+              <ng-container *ngTemplateOutlet="tabs"></ng-container>
+            </div>
+          </valtimo-list-carbon>
         </valtimo-widget>
       </ng-container>
     </ng-container>

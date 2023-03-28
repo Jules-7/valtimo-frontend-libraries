@@ -22,10 +22,12 @@ import {TranslateModule} from '@ngx-translate/core';
 import {CardModule} from '../card/card.module';
 import {ListComponent} from './list.component';
 import {ListFilterPipe} from './ListFilterPipe.directive';
+import {ListCarbonComponent} from './list-carbon.component';
+import {PaginationModule, TableModule} from 'carbon-components-angular';
 
 @NgModule({
-  declarations: [ListComponent, ListFilterPipe],
-  imports: [CommonModule, CardModule, NgbPaginationModule, FormsModule, TranslateModule],
-  exports: [ListComponent, ListFilterPipe],
+  declarations: [ListComponent, ListCarbonComponent, ListFilterPipe],
+  imports: [CommonModule, CardModule, NgbPaginationModule, FormsModule, TranslateModule, TableModule, PaginationModule],
+  exports: [ListComponent, ListCarbonComponent, ListFilterPipe],
 })
 export class ListModule {}
