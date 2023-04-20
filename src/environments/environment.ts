@@ -68,7 +68,7 @@ const defaultDefinitionColumns: Array<DefinitionColumn> = [
 
 export const environment: ValtimoConfig = {
   logoSvgBase64: LOGO_BASE_64,
-  applicationTitle: '',
+  applicationTitle: 'Valtimo',
   production: false,
   initializers: [
     openZaakExtensionInitializer,
@@ -236,6 +236,7 @@ export const environment: ValtimoConfig = {
     leningen: ['Boom', 'Straatverlichting'],
   },
   featureToggles: {
+    applicationTitleAsSuffix: true,
     disableFormFlow: false,
     enableHackathonCasesPage: true,
     showUserNameInTopBar: true,

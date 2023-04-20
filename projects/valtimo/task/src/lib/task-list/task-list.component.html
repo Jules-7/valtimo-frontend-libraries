@@ -17,7 +17,7 @@
 <div class="main-content">
   <div class="container-fluid">
     <valtimo-widget>
-      <valtimo-list
+      <valtimo-list-carbon
         [items]="tasks[currentTaskType].tasks"
         [fields]="tasks[currentTaskType].fields"
         [pagination]="tasks[currentTaskType].pagination"
@@ -53,7 +53,7 @@
             </li>
           </ul>
         </div>
-      </valtimo-list>
+      </valtimo-list-carbon>
     </valtimo-widget>
     <valtimo-task-detail-modal
       #taskDetail

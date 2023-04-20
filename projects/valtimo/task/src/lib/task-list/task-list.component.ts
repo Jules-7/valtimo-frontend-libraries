@@ -62,7 +62,9 @@ export class TaskListComponent implements OnDestroy {
   }
 
   public paginationClicked(page: number, type: string) {
-    this.tasks[type].page = page - 1;
+    this.tasks[type].page = page;
+    this.tasks[type].pagination.page = page;
+    console.log('current task-list page: ', this.tasks[type].page);
     this.getTasks(type);
   }
 
@@ -89,7 +91,6 @@ export class TaskListComponent implements OnDestroy {
 
   getTasks(type: string) {
     let params: any;
-
     this.translationSubscription = combineLatest([
       this.translateService.stream(`task-list.${type}.title`),
       this.translateService.stream(`task-list.${type}.description`),
@@ -142,6 +143,7 @@ export class TaskListComponent implements OnDestroy {
         this.defaultTaskListFields(type);
       }
     });
+    console.log('tasks: ', this.tasks);
   }
 
   public defaultTaskListFields(type) {

@@ -30,10 +30,13 @@
       />
     </div>
   </ibm-table-header>
+  <ng-content select="[tabs]"></ng-content>
   <ibm-table (rowClick)="onClickRow(this.items[$event])" (sort)="onClickSort($event)" [isDataGrid]="false" [model]="tableModel"
-             [showSelectionColumn]="false" [size]="'md'" [skeleton]="false" [striped]="striped">
+             [showSelectionColumn]="false" [size]="'md'" [skeleton]="false" [striped]="striped" #table>
+    <tbody><tr><td class="no-data" [colSpan]="fields.length"><div>{{ 'list.noResults' | translate }}</div></td></tr></tbody>
   </ibm-table>
   <ibm-pagination
+          *ngIf="pagination && items?.length > 0 && fields?.length > 0"
           (selectPage)="onClickPagination($event)"
           [disabled]="false"
           [model]="tableModel"

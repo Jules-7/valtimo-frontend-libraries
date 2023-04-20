@@ -175,6 +175,7 @@ export class ListComponent implements OnChanges, OnInit, AfterViewInit {
 
   public onClickPagination(page) {
     this.paginationClicked.emit(page);
+    console.log('onclickpage: ', page);
   }
 
   public handleFieldClick(key: string, sortable: boolean): void {

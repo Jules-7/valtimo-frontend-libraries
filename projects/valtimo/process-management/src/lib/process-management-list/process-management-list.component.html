@@ -15,7 +15,7 @@
   -->
 
 <valtimo-widget>
-  <valtimo-list
+  <valtimo-list-carbon
     [items]="processDefinitions"
     [fields]="fields"
     (rowClicked)="editProcessDefinition($event)"
@@ -27,5 +27,5 @@
       <h3 class="list-header-title">{{ 'Processes' | translate }}</h3>
       <h5 class="list-header-description">{{ 'Overview of all Processes' | translate }}</h5>
     </div>
-  </valtimo-list>
+  </valtimo-list-carbon>
 </valtimo-widget>

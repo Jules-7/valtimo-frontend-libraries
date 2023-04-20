@@ -54,6 +54,7 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
   @Input() lastColumnTemplate?: TemplateRef<any>;
   @Input() striped?: boolean = true;
   @Input() itemsPerPageOptions?: Array<number> = [10, 25, 50, 100];
+  @Input() hideColumnLabels?: boolean = false;
 
   @Output() rowClicked: EventEmitter<any> = new EventEmitter();
   @Output() paginationClicked: EventEmitter<any> = new EventEmitter();
@@ -70,6 +71,7 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
   public searchModel: string;
   public regExpStringRemoveUnderscore = /_/g;
   @ViewChild('searchBox2') searchBox: ElementRef;
+  @ViewChild('table', { read: ElementRef }) table: ElementRef;
 
   readonly sort$ = new BehaviorSubject<SortState>({
     state: {name: '', direction: 'DESC'},
@@ -94,7 +96,7 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
       );
       this.paginationSet.emit(10);
     }
-    this.tableModel.pageLength = this.pagination.size
+    this.tableModel.pageLength = this.pagination?.size || this.items.length;
   }
 
   setPaginationSize(numberOfEntries: string) {
@@ -109,6 +111,7 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
   }
 
   ngOnInit() {
+    console.log('Input pagination: ', this.pagination);
     if (this.pagination) {
       this.loadPaginationSize();
     }
@@ -120,16 +123,21 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
     //TEMP CARBON STUFF
     this.setTableData();
     this.tableModel.data = [];
+    this.tableModel.header = [];
+    console.log('headerItems:', this.tableModel.header);
+    console.log('fields: ', this.fields);
     for (let field of this.fields) {
       this.tableModel.header.push(new TableHeaderItem({data: field.label}))
+      console.log('field:', field.label);
     }
+    console.log('headerItems:', this.tableModel.header);
     for (let action of this.actions) {
       this.tableModel.header.push(new TableHeaderItem({data: action.columnName}))
     }
-    this.tableModel.pageLength = this.pagination.size || 10;
-    this.tableModel.totalDataLength = this.pagination.collectionSize;
-    console.log('initpage: ', this.pagination.page);
-    this.selectPage(this.pagination.page);
+    console.log('headerItems:', this.tableModel.header);
+    this.tableModel.pageLength = this.pagination?.size || this.tableData.length || 10;
+    this.tableModel.totalDataLength = this.pagination?.collectionSize || this.tableData.length;
+    this.selectPage(this.pagination?.page || 1);
   }
 
   setTableData() {
@@ -141,12 +149,14 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
       }
       this.tableData.push(newRow);
     });
+    console.log('tableData: ', this.tableData);
   }
 
   //TEMP CARBON STUFF
   selectPage(page) {
     console.log('page: ', page);
     console.log('data: ', this.tableData);
+    console.log('tableModel: ', this.tableModel);
     this.tableModel.currentPage = page;
     const fullPage = [];
     for (
@@ -167,6 +177,7 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
   //END TEMP CARBON STUFF
 
   ngOnChanges(changes: SimpleChanges) {
+    console.log('Input pagination(change): ', this.pagination);
     console.log('searchModel: ', this.searchModel);
     if (changes.items && changes.items.currentValue) {
       this.transformListItemsMatchFields();
@@ -177,7 +188,17 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
     }
 
     this.setTableData();
-    this.selectPage(this.pagination.page);
+    this.tableModel.data = [];
+    this.tableModel.header = [];
+    for (let field of this.fields) {
+      this.tableModel.header.push(new TableHeaderItem({data: field.label}))
+    }
+    for (let action of this.actions) {
+      this.tableModel.header.push(new TableHeaderItem({data: action.columnName}))
+    }
+    this.tableModel.pageLength = this.pagination?.size || this.tableData.length || 10;
+    this.tableModel.totalDataLength = this.pagination?.collectionSize || this.tableData.length;
+    this.selectPage(this.pagination?.page || 1);
   }
 
   ngAfterViewInit() {
@@ -186,13 +207,16 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
         .pipe(debounceTime(500))
         .subscribe(() => {
           const value = this.searchBox.nativeElement.value;
-          if (this.search.observers.length > 0) {
+          if (this.search?.observers?.length > 0) {
             // custom search callbak is specified, perhaps to query on the server side
             this.search.emit(value);
           } else {
             this.searchModel = value;
           }
         });
+    }
+    if(this.hideColumnLabels) {
+      this.table.nativeElement.children[0].children[0].style.display = 'none';
     }
   }
 
@@ -236,8 +260,8 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
   }
 
   public onClickPagination(page) {
-    this.pagination.size = this.tableModel.pageLength;
-    this.setPaginationSize(this.pagination.size);
+    // this.pagination.size = this.tableModel.pageLength;
+    // this.setPaginationSize(this.pagination.size);
     this.paginationClicked.emit(page);
     // this.pagination.page = page;
     console.log('onclickpage: ', page, this.pagination.size, this.tableModel.pageLength, this.pagination.page);
