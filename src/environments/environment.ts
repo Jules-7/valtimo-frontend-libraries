@@ -236,7 +236,6 @@ export const environment: ValtimoConfig = {
     leningen: ['Boom', 'Straatverlichting'],
   },
   featureToggles: {
-    applicationTitleAsSuffix: true,
     disableFormFlow: false,
     enableHackathonCasesPage: true,
     showUserNameInTopBar: true,

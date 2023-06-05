@@ -260,8 +260,8 @@ export class ListCarbonComponent implements OnChanges, OnInit, AfterViewInit {
   }
 
   public onClickPagination(page) {
-    // this.pagination.size = this.tableModel.pageLength;
-    // this.setPaginationSize(this.pagination.size);
+    this.pagination.size = this.tableModel.pageLength;
+    this.setPaginationSize(this.pagination.size);
     this.paginationClicked.emit(page);
     // this.pagination.page = page;
     console.log('onclickpage: ', page, this.pagination.size, this.tableModel.pageLength, this.pagination.page);
