@@ -104,7 +104,6 @@
       "@valtimo/plugin-management/*": ["dist/valtimo/plugin-management/*"],
       "@valtimo/plugin": ["dist/valtimo/plugin"],
       "@valtimo/plugin/*": ["dist/valtimo/plugin/*"],
-      "@valtimo/exact-plugin": ["dist/valtimo/exact-plugin"],
       "@valtimo/exact-plugin/*": ["dist/valtimo/exact-plugin/*"]
     }
   },

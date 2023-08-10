@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {Location} from '@angular/common';
 import {
   AfterViewInit,
@@ -27,7 +26,7 @@ import {ActivatedRoute, ParamMap, Params, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {PermissionService} from '@valtimo/access-control';
 import {BreadcrumbService} from '@valtimo/components';
-import {ConfigService, DossierListTab} from '@valtimo/config';
+import {ConfigService} from '@valtimo/config';
 import {Document, DocumentService, ProcessDocumentDefinition} from '@valtimo/document';
 import {KeycloakService} from 'keycloak-angular';
 import moment from 'moment';
@@ -70,15 +69,16 @@ export class DossierDetailComponent implements AfterViewInit, OnDestroy {
   public documentDefinitionName: string;
   public documentDefinitionNameTitle: string;
   public documentId: string;
-  public dossierStatusTabs: Array<DossierListTab> | null = null;
+  private snapshot: ParamMap;
   public processDefinitionListFields: Array<any> = [];
   public processDocumentDefinitions: ProcessDocumentDefinition[] = [];
   public tabLoader: TabLoaderImpl | null = null;
 
-  public readonly assigneeId$ = new BehaviorSubject<string>('');
-  public readonly refreshDocument$ = new BehaviorSubject<null>(null);
+  readonly refreshDocument$ = new BehaviorSubject<null>(null);
 
-  public readonly document$: Observable<Document | null> = this.refreshDocument$.pipe(
+  readonly assigneeId$ = new BehaviorSubject<string>('');
+
+  readonly document$: Observable<Document | null> = this.refreshDocument$.pipe(
     switchMap(() => this.route.params),
     map((params: Params) => params?.documentId),
     switchMap((documentId: string) =>
@@ -172,9 +172,9 @@ export class DossierDetailComponent implements AfterViewInit, OnDestroy {
     private readonly tabService: TabService,
     private readonly translateService: TranslateService
   ) {
-    this._snapshot = this.route.snapshot.paramMap;
-    this.documentDefinitionName = this._snapshot.get('documentDefinitionName') || '';
-    this.documentId = this._snapshot.get('documentId') || '';
+    this.snapshot = this.route.snapshot.paramMap;
+    this.documentDefinitionName = this.snapshot.get('documentDefinitionName') || '';
+    this.documentId = this.snapshot.get('documentId') || '';
     this.tabService.getConfigurableTabs(this.documentDefinitionName);
   }
 
@@ -200,7 +200,7 @@ export class DossierDetailComponent implements AfterViewInit, OnDestroy {
     this.getAllAssociatedProcessDefinitions();
   }
 
-  public ngOnDestroy(): void {
+  ngOnDestroy(): void {
     this.breadcrumbService.clearSecondBreadcrumb();
   }
 
@@ -221,11 +221,11 @@ export class DossierDetailComponent implements AfterViewInit, OnDestroy {
       });
   }
 
-  public startProcess(processDocumentDefinition: ProcessDocumentDefinition): void {
+  startProcess(processDocumentDefinition: ProcessDocumentDefinition): void {
     this.supportingProcessStart.openModal(processDocumentDefinition, this.documentId);
   }
 
-  public claimAssignee(): void {
+  claimAssignee(): void {
     this.isAssigning$.next(true);
 
     this.userId$
@@ -235,19 +235,19 @@ export class DossierDetailComponent implements AfterViewInit, OnDestroy {
           this.documentService.assignHandlerToDocument(this.documentId, userId ?? '')
         )
       )
-      .subscribe({
-        next: (): void => {
+      .subscribe(
+        (): void => {
           this.isAssigning$.next(false);
           this.refreshDocument$.next(null);
         },
-        error: (): void => {
+        (): void => {
           this.isAssigning$.next(false);
           this.logger.debug('Something went wrong while assigning user to case');
-        },
-      });
+        }
+      );
   }
 
-  public assignmentOfDocumentChanged(): void {
+  assignmentOfDocumentChanged(): void {
     this.refreshDocument$.next(null);
   }
 

@@ -1,4 +1,4 @@
-/*
+/*!
  * Copyright 2015-2023 Ritense BV, the Netherlands.
  *
  * Licensed under EUPL, Version 1.2 (the "License");
@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-/*
- * Public API Surface of access-control
- */
-
-export * from './lib/models';
-export * from './lib/services';
-export * from './lib/utils';
+.dashboards-container .cds--tab-content {
+  outline: 0;
+  padding: 0;
+}
