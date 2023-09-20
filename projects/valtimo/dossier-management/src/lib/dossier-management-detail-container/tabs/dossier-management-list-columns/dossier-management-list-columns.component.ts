@@ -13,10 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {Component, TemplateRef, ViewChild} from '@angular/core';
-import {ListField} from '@valtimo/components';
+import {FormControl, FormGroup, Validators} from '@angular/forms';
+import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
+import {ActivatedRoute} from '@angular/router';
+import {TranslateService} from '@ngx-translate/core';
+import {ListField, ViewType} from '@valtimo/components';
 import {ConfigService, DefinitionColumn} from '@valtimo/config';
+import {
+  CaseListColumn,
+  CaseListColumnView,
+  DisplayTypeParameters,
+  DocumentService,
+} from '@valtimo/document';
+import {MultiInputValues} from '@valtimo/user-interface';
+import {ListItem} from 'carbon-components-angular/dropdown/list-item.interface';
 import {
   BehaviorSubject,
   combineLatest,
@@ -29,20 +40,8 @@ import {
   switchMap,
   tap,
 } from 'rxjs';
-import {
-  CaseListColumn,
-  CaseListColumnView,
-  DisplayTypeParameters,
-  DocumentService,
-} from '@valtimo/document';
-import {ActivatedRoute} from '@angular/router';
-import {TranslateService} from '@ngx-translate/core';
-import {ListColumnModal} from '../../../models';
-import {FormControl, FormGroup, Validators} from '@angular/forms';
-import {ListItem} from 'carbon-components-angular/dropdown/list-item.interface';
 import {take} from 'rxjs/operators';
-import {DomSanitizer, SafeUrl} from '@angular/platform-browser';
-import {MultiInputValues} from '@valtimo/user-interface';
+import {ListColumnModal} from '../../../models';
 
 @Component({
   selector: 'valtimo-dossier-management-list-columns',
@@ -214,13 +213,13 @@ export class DossierManagementListColumnsComponent {
     startWith(false)
   );
 
-  readonly DISPLAY_TYPES: Array<string> = [
-    'string',
-    'date',
-    'boolean',
-    'enum',
-    'arrayCount',
-    'underscoresToSpaces',
+  readonly DISPLAY_TYPES: Array<ViewType> = [
+    ViewType.TEXT,
+    ViewType.DATE,
+    ViewType.BOOLEAN,
+    ViewType.ENUM,
+    ViewType.ARRAY_COUNT,
+    ViewType.UNDERSCORES_TO_SPACES,
   ];
 
   readonly showDateFormat$ = this.formGroup.valueChanges.pipe(

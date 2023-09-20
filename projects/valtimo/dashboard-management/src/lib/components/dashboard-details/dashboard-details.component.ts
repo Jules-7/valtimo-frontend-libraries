@@ -4,10 +4,9 @@ import {ActivatedRoute} from '@angular/router';
 import {ArrowDown16, ArrowUp16, Edit16} from '@carbon/icons';
 import {TranslateService} from '@ngx-translate/core';
 import {
-  CarbonTableConfig,
-  ColumnType,
-  createCarbonTableConfig,
+  ViewType,
   PageTitleService,
+  ColumnConfig
 } from '@valtimo/components';
 import {DashboardWidgetConfiguration} from '@valtimo/dashboard';
 import {IconService} from 'carbon-components-angular';
@@ -24,7 +23,7 @@ export class DashboardDetailsComponent implements AfterViewInit {
   @ViewChild('moveButtonsTemplate', {static: false}) moveButtonsTemplate: TemplateRef<any>;
 
   public modalType: WidgetModalType = 'create';
-  public tableConfig!: CarbonTableConfig;
+  public fields!: ColumnConfig[];
 
   private readonly _dashboardKey$ = this.route.params.pipe(map(params => params.id));
   private readonly _refreshDashboardSubject$ = new BehaviorSubject<null>(null);
@@ -102,7 +101,7 @@ export class DashboardDetailsComponent implements AfterViewInit {
 
   public ngAfterViewInit(): void {
     this.iconService.registerAll([ArrowDown16, ArrowUp16, Edit16]);
-    this.setTableConfig();
+    this.setFields();
   }
 
   public addWidget(): void {
@@ -131,40 +130,38 @@ export class DashboardDetailsComponent implements AfterViewInit {
     this._refreshWidgetsSubject$.next({direction: 'UP', index: data.index});
   }
 
-  private setTableConfig(): void {
-    this.tableConfig = createCarbonTableConfig({
-      fields: [
-        {
-          columnType: ColumnType.TEXT,
-          fieldName: 'title',
-          translationKey: 'Name',
-        },
-        {
-          columnType: ColumnType.TEMPLATE,
-          template: this.moveButtonsTemplate,
-          className: 'dashboard-detail-table__actions',
-          fieldName: '',
-          translationKey: '',
-        },
-        {
-          columnType: ColumnType.ACTION,
-          className: 'dashboard-detail-table__actions',
-          fieldName: '',
-          translationKey: '',
-          actions: [
-            {
-              actionName: 'Edit',
-              callback: this.editWidget.bind(this),
-            },
-            {
-              actionName: 'Delete',
-              callback: this.deleteWidget.bind(this),
-              type: 'danger',
-            },
-          ],
-        },
-      ],
-    });
+  private setFields(): void {
+    this.fields = [
+      {
+        viewType: ViewType.TEXT,
+        key: 'title',
+        label: 'Name',
+      },
+      {
+        viewType: ViewType.TEMPLATE,
+        template: this.moveButtonsTemplate,
+        className: 'dashboard-detail-table__actions',
+        key: '',
+        label: '',
+      },
+      {
+        viewType: ViewType.ACTION,
+        className: 'dashboard-detail-table__actions',
+        key: '',
+        label: '',
+        actions: [
+          {
+            actionName: 'Edit',
+            callback: this.editWidget.bind(this),
+          },
+          {
+            actionName: 'Delete',
+            callback: this.deleteWidget.bind(this),
+            type: 'danger',
+          },
+        ],
+      },
+    ];
   }
 
   private editWidget(event: DashboardWidgetConfiguration): void {

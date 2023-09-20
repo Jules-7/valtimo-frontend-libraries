@@ -74,7 +74,6 @@ export class ObjectListComponent {
 
   readonly pageSizes$ = new BehaviorSubject<Partial<Pagination>>({
     collectionSize: 0,
-    maxPaginationItemSize: 5,
   });
 
   readonly pagination$: Observable<Pagination> = combineLatest([

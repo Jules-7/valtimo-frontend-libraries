@@ -18,6 +18,7 @@
   *ngIf="{
     fields: fields$ | async,
     documentItems: documentItems$ | async,
+    tableData: tableData$ | async,
     searchFields: searchFields$ | async,
     schema: schema$ | async,
     loaded:
@@ -37,6 +38,7 @@
         ></valtimo-dossier-list-actions>
         <ng-container *ngIf="obs.loaded; else loading">
           <ng-container *ngTemplateOutlet="searchFields; context: {obs: obs}"></ng-container>
+
           <ng-container *ngTemplateOutlet="list; context: {obs: obs}"></ng-container>
         </ng-container>
       </div>
@@ -56,7 +58,7 @@
 </ng-template>
 
 <ng-template #list let-obs="obs">
-  <valtimo-widget>
+  <!-- <valtimo-widget>
     <valtimo-list
       [items]="obs.documentItems"
       [fields]="obs.fields"
@@ -65,10 +67,8 @@
       [viewMode]="true"
       [header]="true"
       paginationIdentifier="dossierList"
-      (paginationClicked)="pageChange($event)"
-      (paginationSet)="pageSizeChange($event)"
       [initialSortState]="pagination.sort"
-      (sortChanged)="sortChanged($event)"
+      (sortChanged)="onSortChange($event)"
     >
       <div header>
         <h3 class="list-header-title">
@@ -81,7 +81,21 @@
         <ng-container *ngTemplateOutlet="tabs"></ng-container>
       </div>
     </valtimo-list>
-  </valtimo-widget>
+  </valtimo-widget> -->
+
+  <br />
+  <br />
+
+  <valtimo-carbon-table
+    [data]="obs.documentItems"
+    [fields]="obs.fields"
+    hideTableHeader
+    [tableConfig]="tableConfig"
+    [pagination]="pagination"
+    (paginationChange)="onPaginationChange($event)"
+    (rowClick)="onRowClick($event)"
+    (sortChange)="onSortChange($event)"
+  ></valtimo-carbon-table>
 </ng-template>
 
 <ng-template #tabs>

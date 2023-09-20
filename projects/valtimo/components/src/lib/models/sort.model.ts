@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-interface ListField {
-  key: string;
-  label: string;
-  sortable: boolean;
-  viewType: string;
-  default?: string | boolean;
+type Direction = 'ASC' | 'DESC';
+
+interface Sort {
+  name: string;
+  direction: Direction;
 }
 
-export {ListField};
+interface SortState {
+  state: Sort;
+  isSorting: boolean;
+}
+
+export {Direction, Sort, SortState};

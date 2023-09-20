@@ -13,8 +13,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 import {Component, OnDestroy, OnInit} from '@angular/core';
+import {ActivatedRoute, Params, Router} from '@angular/router';
+import {NgbNavChangeEvent} from '@ng-bootstrap/ng-bootstrap';
+import {TranslateService} from '@ngx-translate/core';
+import {
+  BreadcrumbService,
+  CarbonPaginationSelection,
+  CarbonTableConfig,
+  ColumnConfig,
+  createCarbonTableConfig,
+  Direction,
+  SortState,
+  ListField,
+  PageTitleService,
+  Pagination,
+} from '@valtimo/components';
+import {
+  AssigneeFilter,
+  ConfigService,
+  DefinitionColumn,
+  DossierListTab,
+  SearchField,
+  SearchFieldValues,
+} from '@valtimo/config';
+import {
+  AdvancedDocumentSearchRequest,
+  AdvancedDocumentSearchRequestImpl,
+  Documents,
+  DocumentService,
+  SpecifiedDocuments,
+} from '@valtimo/document';
 import {
   BehaviorSubject,
   combineLatest,
@@ -27,7 +56,8 @@ import {
   take,
   tap,
 } from 'rxjs';
-import {ActivatedRoute, Router} from '@angular/router';
+
+import {DefaultTabs} from '../dossier-detail-tab-enum';
 import {
   DossierColumnService,
   DossierListAssigneeService,
@@ -36,27 +66,6 @@ import {
   DossierListService,
   DossierParameterService,
 } from '../services';
-import {
-  AssigneeFilter,
-  ConfigService,
-  DefinitionColumn,
-  Direction,
-  DossierListTab,
-  SearchField,
-  SearchFieldValues,
-  SortState,
-} from '@valtimo/config';
-import {BreadcrumbService, ListField, PageTitleService, Pagination} from '@valtimo/components';
-import {TranslateService} from '@ngx-translate/core';
-import {
-  AdvancedDocumentSearchRequest,
-  AdvancedDocumentSearchRequestImpl,
-  Documents,
-  DocumentService,
-  SpecifiedDocuments,
-} from '@valtimo/document';
-import {DefaultTabs} from '../dossier-detail-tab-enum';
-import {NgbNavChangeEvent} from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
   selector: 'valtimo-dossier-list',
@@ -80,6 +89,39 @@ export class DossierListComponent implements OnInit, OnDestroy {
   public pagination!: Pagination;
   public canHaveAssignee!: boolean;
   public visibleDossierTabs: Array<DossierListTab> | null = null;
+
+  public readonly tableConfig: CarbonTableConfig = createCarbonTableConfig({withPagination: true});
+  // public readonly tableConfig: CarbonTableConfig = createCarbonTableConfig({
+  //   fields: [
+  //     {
+  //       viewType: viewType.TEXT,
+  //       fieldName: 'referenceNumber',
+  //       translationKey: 'fieldLabels.referenceNumber',
+  //     },
+  //     {
+  //       viewType: viewType.TEXT,
+  //       fieldName: 'createdBy',
+  //       translationKey: 'fieldLabels.createdBy',
+  //     },
+  //     {
+  //       viewType: viewType.DATE,
+  //       format: 'd-m-y, h:mm a',
+  //       fieldName: 'createdOn',
+  //       translationKey: 'fieldLabels.createdOn',
+  //     },
+  //     {
+  //       viewType: viewType.TEXT,
+  //       fieldName: 'lastModified',
+  //       translationKey: 'fieldLabels.lastModified',
+  //     },
+  //     {
+  //       viewType: viewType.TEXT,
+  //       fieldName: 'assigneeFullName',
+  //       translationKey: 'fieldLabels.assigneeFullName',
+  //     },
+  //   ],
+  //   withPagination: true,
+  // });
 
   public readonly searchFields$: Observable<Array<SearchField> | null> =
     this.searchService.documentSearchFields$.pipe(
@@ -126,7 +168,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
       }),
       tap(columns => {
         this.listService.documentDefinitionName$.pipe(take(1)).subscribe(documentDefinitionName => {
-          this.paginationService.setPagination(documentDefinitionName, columns);
+          this.paginationService.setPagination(columns);
         });
       })
     );
@@ -145,11 +187,12 @@ export class DossierListComponent implements OnInit, OnDestroy {
         columns,
         canHaveAssignee
       );
-      const listFields = this.columnService.mapDefinitionColumnsToListFields(
+      const listFields = this.columnService.mapDefinitionColumnsToColumnConfigs(
         filteredAssigneeColumns,
         hasEnvConfig
       );
-      const fieldsToReturn = this.assigneeService.addAssigneeListField(
+
+      const fieldsToReturn = this.assigneeService.addAssigneeColumnConfig(
         columns,
         listFields,
         canHaveAssignee
@@ -157,9 +200,8 @@ export class DossierListComponent implements OnInit, OnDestroy {
 
       return fieldsToReturn;
     }),
-    tap(listFields => {
-      const defaultListField = listFields.find(field => field.default);
-
+    tap((fields: ColumnConfig[]) => {
+      const defaultListField = fields.find((field: ColumnConfig) => field.default);
       // set default sort state if no pagination query parameters for sorting are available
       this.parameterService.queryPaginationParams$
         .pipe(take(1))
@@ -266,15 +308,22 @@ export class DossierListComponent implements OnInit, OnDestroy {
     })
   );
 
+  public readonly tableData$ = this._documentsRequest$.pipe(
+    map(documents => documents.content),
+    tap(res => {
+      console.log('withtout mapping', res);
+    })
+  );
   public documentItems$ = combineLatest([
     this._documentsRequest$,
     this._hasEnvColumnConfig$,
     this._hasApiColumnConfig$,
   ]).pipe(
-    map(([documents, hasEnvColumnConfig, hasApiColumnConfig]) =>
-      this.listService.mapDocuments(documents, hasEnvColumnConfig, hasApiColumnConfig)
-    ),
-    tap(() => {
+    map(([documents, hasEnvColumnConfig, hasApiColumnConfig]) => {
+      return this.listService.mapDocuments(documents, hasEnvColumnConfig, hasApiColumnConfig);
+    }),
+    tap(res => {
+      console.log('after mapping', res);
       this.loadingAssigneeFilter = false;
       this.loadingDocumentItems = false;
     })
@@ -299,21 +348,21 @@ export class DossierListComponent implements OnInit, OnDestroy {
     private readonly breadcrumbService: BreadcrumbService
   ) {}
 
-  ngOnInit(): void {
+  public ngOnInit(): void {
     this.setVisibleTabs();
     this.openDocumentDefinitionNameSubscription();
   }
 
-  ngOnDestroy(): void {
+  public ngOnDestroy(): void {
     this._documentDefinitionNameSubscription?.unsubscribe();
     this.pageTitleService.enableReset();
   }
 
-  search(searchFieldValues: SearchFieldValues): void {
+  public search(searchFieldValues: SearchFieldValues): void {
     this.searchService.search(searchFieldValues);
   }
 
-  rowClick(document: any): void {
+  public onRowClick(document: any): void {
     this.listService.documentDefinitionName$.pipe(take(1)).subscribe(documentDefinitionName => {
       this.breadcrumbService.cacheQueryParams(
         `/dossiers/${documentDefinitionName}`,
@@ -325,31 +374,32 @@ export class DossierListComponent implements OnInit, OnDestroy {
     });
   }
 
-  pageChange(newPage: number): void {
-    this.paginationService.pageChange(newPage);
+  public onPaginationChange(pagination: CarbonPaginationSelection): void {
+    if (pagination.page !== this.pagination.page) {
+      this.paginationService.pageChange(pagination.page);
+      return;
+    }
+
+    this.paginationService.pageSizeChange(pagination.size);
   }
 
-  pageSizeChange(newPageSize: number): void {
-    this.paginationService.pageSizeChange(newPageSize);
-  }
-
-  sortChanged(newSortState: SortState): void {
+  public onSortChange(newSortState: SortState): void {
     this.paginationService.sortChanged(newSortState);
   }
 
-  tabChange(tab: NgbNavChangeEvent<any>): void {
+  public tabChange(tab: NgbNavChangeEvent<any>): void {
     this.paginationService.setPage(1);
     this.assigneeService.setAssigneeFilter(tab.nextId.toUpperCase());
   }
 
-  refresh(): void {
+  public refresh(): void {
     this.searchService.refresh();
   }
 
   private openDocumentDefinitionNameSubscription(): void {
     this._documentDefinitionNameSubscription = this.route.params
       .pipe(
-        map(params => params?.documentDefinitionName),
+        map((params: Params) => params?.documentDefinitionName),
         filter(docDefName => !!docDefName),
         distinctUntilChanged()
       )

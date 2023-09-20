@@ -24,6 +24,7 @@ import {ConfigModule, HttpLoaderFactory} from '@valtimo/config';
 import {
   BpmnJsDiagramModule,
   CamundaFormModule,
+  CarbonTableModule,
   DataListModule,
   DocumentenApiMetadataModalModule,
   DropzoneModule,
@@ -160,6 +161,7 @@ export type TabsFactory = () => Map<string, object>;
     CarbonButtonModule,
     IconModule,
     FormLinkModule,
+    CarbonTableModule,
   ],
   exports: [DossierListComponent, DossierDetailComponent],
 })

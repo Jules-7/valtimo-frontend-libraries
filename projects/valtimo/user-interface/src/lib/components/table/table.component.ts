@@ -45,10 +45,6 @@ export class TableComponent implements OnInit, OnDestroy {
     this.collectionSize$.next(collectionSize);
   }
   @Input()
-  set maxPaginationItemSize(maxPaginationItemSize: TablePagination['maxPaginationItemSize']) {
-    this.maxPaginationItemSize$.next(maxPaginationItemSize);
-  }
-  @Input()
   set page(page: TablePagination['page']) {
     this.page$.next(page);
   }
@@ -65,25 +61,20 @@ export class TableComponent implements OnInit, OnDestroy {
   readonly isMobile$ = new BehaviorSubject<boolean>(false);
 
   private readonly collectionSize$ = new BehaviorSubject<TablePagination['collectionSize']>(0);
-  private readonly maxPaginationItemSize$ = new BehaviorSubject<
-    TablePagination['maxPaginationItemSize']
-  >(0);
   private readonly page$ = new BehaviorSubject<TablePagination['page']>(0);
   private readonly size$ = new BehaviorSubject<TablePagination['size']>(0);
 
   readonly pagination$ = combineLatest([
     this.collectionSize$,
-    this.maxPaginationItemSize$,
     this.page$,
     this.size$,
   ]).pipe(
-    map(([collectionSize, maxPaginationItemSize, page, size]) => ({
+    map(([collectionSize, page, size]) => ({
       collectionSize,
-      maxPaginationItemSize,
       page,
       size,
     })),
-    tap(({collectionSize, maxPaginationItemSize, page, size}) => {
+    tap(({collectionSize, page, size}) => {
       const amountOfPagesAvailable = Math.ceil(collectionSize / size);
 
       if (

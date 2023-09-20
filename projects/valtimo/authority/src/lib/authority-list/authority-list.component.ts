@@ -50,7 +50,6 @@ export class AuthorityListComponent implements OnInit {
     collectionSize: 0,
     page: 1,
     size: 10,
-    maxPaginationItemSize: 5,
   };
 
   public pageParam = 0;
