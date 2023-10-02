@@ -20,6 +20,8 @@ import {BehaviorSubject, combineLatest, map, Observable, Subject, Subscription, 
 import {SelectItem} from '../../models';
 import {TranslateService} from '@ngx-translate/core';
 import {DocumentService} from '@valtimo/document';
+import {IconService} from 'carbon-components-angular';
+import {FilterReset16} from '@carbon/icons';
 
 @Component({
   selector: 'valtimo-search-fields',
@@ -85,7 +87,8 @@ export class SearchFieldsComponent implements OnInit, OnDestroy {
 
   constructor(
     private readonly documentService: DocumentService,
-    private readonly translateService: TranslateService
+    private readonly translateService: TranslateService,
+    private readonly iconService: IconService
   ) {}
 
   ngOnInit() {
@@ -93,6 +96,7 @@ export class SearchFieldsComponent implements OnInit, OnDestroy {
     this.openValuesSubjectSubscription();
     this.openDropdownSubscription();
     this.setDefaultValues();
+    this.iconService.registerAll([FilterReset16]);
   }
 
   ngOnDestroy(): void {

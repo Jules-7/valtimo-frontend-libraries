@@ -227,6 +227,7 @@
     [clear$]="clear$"
     (keyup.enter)="search()"
     [defaultValue]="values[searchField.key]"
+    [carbonTheme]="'white'"
   >
   </v-input>
 </ng-template>
@@ -252,6 +253,7 @@
     [clear$]="clear$"
     (keyup.enter)="search()"
     [defaultValue]="values[searchField.key]"
+    [carbonTheme]="'white'"
   >
   </v-input>
 </ng-template>
@@ -267,9 +269,9 @@
   <v-date-picker
     *ngIf="searchField.dataType === 'date' && searchField.fieldType === 'single'"
     [title]="title"
+    [fullWidth]="true"
     [tooltip]="tooltip !== tooltipKey && tooltip"
     [name]="searchField.key"
-    fullWidth="true"
     (valueChange)="singleValueChange(searchField.key, $event)"
     [smallLabel]="true"
     [clear$]="clear$"
@@ -291,6 +293,7 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-form
       (valueChange)="multipleValueChange(searchField.key, $event)"
@@ -302,6 +305,7 @@
         [clear$]="clear$"
         (keyup.enter)="search()"
         [defaultValue]="values[searchField.key]?.start"
+        [carbonTheme]="'white'"
       >
       </v-input>
       <ng-container *ngTemplateOutlet="toText"></ng-container>
@@ -311,6 +315,7 @@
         [clear$]="clear$"
         (keyup.enter)="search()"
         [defaultValue]="values[searchField.key]?.end"
+        [carbonTheme]="'white'"
       >
       </v-input>
     </v-form>
@@ -330,6 +335,7 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-form
       (valueChange)="multipleValueChange(searchField.key, $event)"
@@ -343,6 +349,7 @@
         [clear$]="clear$"
         (keyup.enter)="search()"
         [defaultValue]="values[searchField.key]?.start"
+        [carbonTheme]="'white'"
       >
       </v-input>
       <ng-container *ngTemplateOutlet="toText"></ng-container>
@@ -354,6 +361,7 @@
         [clear$]="clear$"
         (keyup.enter)="search()"
         [defaultValue]="values[searchField.key]?.end"
+        [carbonTheme]="'white'"
       >
       </v-input>
     </v-form>
@@ -373,6 +381,7 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-form
       (valueChange)="multipleValueChange(searchField.key, $event)"
@@ -380,7 +389,7 @@
     >
       <v-date-picker
         name="start"
-        fullWidth="true"
+        [fullWidth]="true"
         [clear$]="clear$"
         (keyup.enter)="search()"
         [defaultDate]="values[searchField.key]?.start"
@@ -388,7 +397,7 @@
       <ng-container *ngTemplateOutlet="toText"></ng-container>
       <v-date-picker
         name="end"
-        fullWidth="true"
+        [fullWidth]="true"
         [clear$]="clear$"
         (keyup.enter)="search()"
         [defaultDate]="values[searchField.key]?.end"
@@ -410,18 +419,19 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-select
       *ngIf="booleanItems$ | async as booleanItems"
       [items]="booleanItems"
       [margin]="false"
       [required]="false"
-      [widthInPx]="200"
       [name]="searchField.key"
       [clearSelectionSubject$]="clear$"
       (selectedChange)="singleValueChange(searchField.key, $event)"
       (keyup.enter)="search()"
       [defaultSelectionId]="getDefaultBooleanSelectionId(values, searchField.key)"
+      [carbonTheme]="'white'"
     ></v-select>
   </ng-container>
 </ng-template>
@@ -439,7 +449,7 @@
     [title]="title"
     [tooltip]="tooltip !== tooltipKey && tooltip"
     [name]="searchField.key"
-    fullWidth="true"
+    [fullWidth]="true"
     (valueChange)="singleValueChange(searchField.key, $event, true)"
     [smallLabel]="true"
     [enableTime]="true"
@@ -462,6 +472,7 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-form
       (valueChange)="multipleValueChange(searchField.key, $event, true)"
@@ -469,7 +480,7 @@
     >
       <v-date-picker
         name="start"
-        fullWidth="true"
+        [fullWidth]="true"
         [enableTime]="true"
         [clear$]="clear$"
         (keyup.enter)="search()"
@@ -478,7 +489,7 @@
       <ng-container *ngTemplateOutlet="toText"></ng-container>
       <v-date-picker
         name="end"
-        fullWidth="true"
+        [fullWidth]="true"
         [enableTime]="true"
         [clear$]="clear$"
         (keyup.enter)="search()"
@@ -503,18 +514,19 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-select
       *ngIf="dropdownSelectItemsMap[searchField.key] as searchFieldSelectItems"
       [items]="searchFieldSelectItems"
       [margin]="false"
       [required]="false"
-      [widthInPx]="200"
       [name]="searchField.key"
       [clearSelectionSubject$]="clear$"
       (selectedChange)="singleValueChange(searchField.key, $event)"
       (keyup.enter)="search()"
       [defaultSelectionId]="values[searchField.key]"
+      [carbonTheme]="'white'"
     ></v-select>
   </ng-container>
 </ng-template>
@@ -534,6 +546,7 @@
       [title]="title"
       [tooltip]="tooltip !== tooltipKey && tooltip"
       [small]="true"
+      [carbonTheme]="'white'"
     ></v-input-label>
     <v-select
       *ngIf="dropdownSelectItemsMap[searchField.key] as searchFieldSelectItems"
@@ -541,12 +554,12 @@
       [margin]="false"
       [multiple]="true"
       [required]="false"
-      [widthInPx]="200"
       [name]="searchField.key"
       [clearSelectionSubject$]="clear$"
       (selectedChange)="multipleValueChange(searchField.key, $event)"
       (keyup.enter)="search()"
       [defaultSelectionIds]="values[searchField.key]"
+      [carbonTheme]="'white'"
     ></v-select>
   </ng-container>
 </ng-template>
@@ -563,23 +576,25 @@
   ></ng-container>
   <div class="buttons-container" *ngIf="{expanded: expanded$ | async} as obs">
     <div class="right-buttons">
-      <button
+      <button cdsButton="tertiary"
+              [size]="'md'"
         (click)="clear()"
         [disabled]="loading || noSearchFields"
         type="button"
-        class="btn btn-space btn-secondary"
         *ngIf="obs.expanded"
       >
         {{ 'searchFields.clearButtonText' | translate }}
+        <svg class="cds--btn__icon" cdsIcon="filter--reset" size="16"></svg>
       </button>
-      <button
-        (click)="search()"
-        [disabled]="loading || noSearchFields || (hasValidValues$ | async) === false"
-        type="button"
-        class="btn btn-space btn-primary"
-        *ngIf="obs.expanded"
+      <button cdsButton
+              [size]="'md'"
+              (click)="search()"
+              [disabled]="loading || noSearchFields || (hasValidValues$ | async) === false"
+              type="button"
+              *ngIf="obs.expanded"
       >
         {{ 'searchFields.searchButtonText' | translate }}
+        <svg class="cds--btn__icon" cdsIcon="search" size="16"></svg>
       </button>
     </div>
   </div>
@@ -601,7 +616,7 @@
       class="accordion-button"
       (click)="toggleExpanded()"
       [ngClass]="
-        obs.expanded ? 'mdi mdi-chevron-right accordion-button--active' : 'mdi mdi-chevron-down'
+        obs.expanded ? 'mdi mdi-chevron-up accordion-button--active' : 'mdi mdi-chevron-down'
       "
     >
       {{ 'searchFields.searchButtonText' | translate }}
