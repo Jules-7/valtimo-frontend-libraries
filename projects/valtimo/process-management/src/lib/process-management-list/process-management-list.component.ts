@@ -14,39 +14,54 @@
  * limitations under the License.
  */
 
-import {Component, OnInit} from '@angular/core';
+import {AfterViewInit, Component, OnInit, TemplateRef, ViewChild} from '@angular/core';
 import {ProcessDefinition, ProcessService} from '@valtimo/process';
 import {Router} from '@angular/router';
+import {CarbonTableConfig, ColumnConfig, createCarbonTableConfig, ViewType} from '@valtimo/components';
+import {IconService} from 'carbon-components-angular';
+import {Upload16} from '@carbon/icons';
 
 @Component({
-  selector: 'valtimo-process-management-list',
-  templateUrl: './process-management-list.component.html',
-  styleUrls: ['./process-management-list.component.scss'],
+    selector: 'valtimo-process-management-list',
+    templateUrl: './process-management-list.component.html',
+    styleUrls: ['./process-management-list.component.scss'],
 })
-export class ProcessManagementListComponent implements OnInit {
-  public processDefinitions: ProcessDefinition[] = [];
-  public fields = [
-    {key: 'key', label: 'Key'},
-    {key: 'name', label: 'Name'},
-    {key: 'readOnly', label: 'Read-only'},
-  ];
+export class ProcessManagementListComponent implements OnInit, AfterViewInit {
+    @ViewChild('readOnlyTag', {static: false}) readOnlyTag: TemplateRef<any>;
 
-  constructor(
-    private processService: ProcessService,
-    private router: Router
-  ) {}
+    public processDefinitions: ProcessDefinition[] = [];
+    public fields: ColumnConfig[]
 
-  ngOnInit() {
-    this.loadProcessDefinitions();
-  }
+    public readonly tableConfig: CarbonTableConfig = createCarbonTableConfig({sortable: false});
 
-  loadProcessDefinitions() {
-    this.processService.getProcessDefinitions().subscribe((processDefs: ProcessDefinition[]) => {
-      this.processDefinitions = processDefs;
-    });
-  }
 
-  editProcessDefinition(processDefinition: ProcessDefinition) {
-    this.router.navigate(['/processes/process', processDefinition.key]);
-  }
+    constructor(
+        private processService: ProcessService,
+        private router: Router,
+        private readonly iconService: IconService
+    ) {
+    }
+
+    ngOnInit() {
+        this.loadProcessDefinitions();
+        this.iconService.registerAll([Upload16])
+    }
+
+    loadProcessDefinitions() {
+        this.processService.getProcessDefinitions().subscribe((processDefs: ProcessDefinition[]) => {
+            this.processDefinitions = processDefs;
+        });
+    }
+
+    editProcessDefinition(processDefinition: ProcessDefinition) {
+        this.router.navigate(['/processes/process', processDefinition.key]);
+    }
+
+    ngAfterViewInit(): void {
+        this.fields = [
+            {key: 'name', label: 'Name', viewType: ViewType.TEXT},
+            {key: 'key', label: 'Key', viewType: ViewType.TEXT},
+            {key: 'readOnly', label: 'Read-only', viewType: ViewType.TEMPLATE, template: this.readOnlyTag},
+        ];
+    }
 }

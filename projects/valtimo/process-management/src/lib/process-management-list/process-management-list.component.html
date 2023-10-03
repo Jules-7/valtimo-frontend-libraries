@@ -14,18 +14,27 @@
   ~ limitations under the License.
   -->
 
-<valtimo-widget>
-  <valtimo-list
-    [items]="processDefinitions"
-    [fields]="fields"
-    (rowClicked)="editProcessDefinition($event)"
-    [header]="true"
-    [viewMode]="true"
-    [isSearchable]="true"
-  >
-    <div header>
-      <h3 class="list-header-title">{{ 'Processes' | translate }}</h3>
-      <h5 class="list-header-description">{{ 'Overview of all Processes' | translate }}</h5>
+<valtimo-carbon-table
+        [data]="processDefinitions"
+        [fields]="fields"
+        (rowClick)="editProcessDefinition($event)"
+        hideTableHeader
+>
+    <div carbonToolbarContent class="button-toolbar">
+        <button cdsButton="ghost" data-toggle="modal" data-target="#uploadProcess" iconOnly="true">
+            <svg class="cds--btn__icon" cdsIcon="upload" size="16"></svg>
+        </button>
+
+        <button cdsButton="primary" [routerLink]="'create'">
+            {{ 'Create new Process' | translate }}
+
+            <svg class="cds--btn__icon" cdsIcon="add" size="16"></svg>
+        </button>
     </div>
-  </valtimo-list>
-</valtimo-widget>
+</valtimo-carbon-table>
+
+<ng-template #readOnlyTag let-data="data">
+    <cds-tag [type]="data.item.readOnly ? 'red' : 'green'">
+        {{'viewTypeConverter.' + (data.item.readOnly ? 'Yes' : 'No') | translate}}
+    </cds-tag>
+</ng-template>
