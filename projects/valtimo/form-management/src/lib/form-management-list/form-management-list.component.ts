@@ -18,6 +18,14 @@ import {Component, OnInit} from '@angular/core';
 import {FormDefinition} from '../models';
 import {FormManagementService} from '../form-management.service';
 import {Router} from '@angular/router';
+import {
+  CarbonPaginatorConfig,
+  CarbonTableConfig,
+  createCarbonTableConfig,
+  DEFAULT_PAGINATOR_CONFIG
+} from "@valtimo/components";
+import {IconService} from 'carbon-components-angular';
+import {Upload16} from '@carbon/icons';
 
 @Component({
   selector: 'valtimo-form-management-list',
@@ -31,7 +39,7 @@ export class FormManagementListComponent implements OnInit {
     {key: 'readOnly', label: 'Read-only'},
   ];
   public pagination = {
-    collectionSize: 0,
+    collectionSize: 10,
     page: 1,
     size: 10,
   };
@@ -42,12 +50,25 @@ export class FormManagementListComponent implements OnInit {
     this.loadFormDefinitions();
   }
 
+  public readonly tableConfig: CarbonTableConfig = createCarbonTableConfig({
+    showSelectionColumn: true,
+    withPagination: true,
+    searchable: true,
+  });
+  public readonly paginatorConfig: CarbonPaginatorConfig = {
+    ...DEFAULT_PAGINATOR_CONFIG,
+    itemsPerPageOptions: [10, 25, 50, 100],
+  };
+
   constructor(
     private formManagementService: FormManagementService,
-    private router: Router
+    private router: Router,
+    private readonly iconService: IconService
   ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.iconService.registerAll([Upload16])
+  }
 
   paginationSet() {
     this.loadFormDefinitions();

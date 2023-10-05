@@ -14,21 +14,27 @@
   ~ limitations under the License.
   -->
 
-<valtimo-list
-  [items]="formDefinitions"
+<valtimo-carbon-table
+  [data]="formDefinitions"
   [fields]="formDefinitionFields"
-  [viewMode]="true"
-  [isSearchable]="true"
+  hideTableHeader
+  [paginatorConfig]="paginatorConfig"
   [pagination]="pagination"
-  paginationIdentifier="formManagementList"
-  (paginationClicked)="paginationClicked($event)"
-  (paginationSet)="paginationSet()"
-  (rowClicked)="editFormDefinition($event)"
-  [header]="true"
+  (paginationChange)="paginationClicked($event)"
+  (rowClick)="editFormDefinition($event)"
   (search)="searchTermEntered($event)"
+  [tableConfig]="tableConfig"
 >
-  <div header>
-    <h3 class="list-header-title">{{ 'Forms' | translate }}</h3>
-    <h5 class="list-header-description">{{ 'Overview of all Forms' | translate }}</h5>
+  <div carbonToolbarContent class="button-toolbar">
+    <button cdsButton="ghost" data-toggle="modal" data-target="#uploadProcess" iconOnly="true" [routerLink]="'create'"
+            [queryParams]="{upload: 'true'}">
+      <svg class="cds--btn__icon" cdsIcon="upload" size="16"></svg>
+    </button>
+
+    <button cdsButton="primary" [routerLink]="'create'">
+      {{ 'Create new Form' | translate }}
+
+      <svg class="cds--btn__icon" cdsIcon="add" size="16"></svg>
+    </button>
   </div>
-</valtimo-list>
+</valtimo-carbon-table>
