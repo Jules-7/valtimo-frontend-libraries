@@ -1,6 +1,6 @@
 {
   "name": "@valtimo/object-management",
-  "version": "10.4.0",
+  "version": "10.7.1-hackathon-3.RC",
   "peerDependencies": {
     "@angular/common": "^14.3.0",
     "@angular/core": "^14.3.0"
