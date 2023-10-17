@@ -15,7 +15,7 @@
  */
 
 import {BrowserModule} from '@angular/platform-browser';
-import {Injector, NgModule} from '@angular/core';
+import {CSP_NONCE, Injector, NgModule} from '@angular/core';
 import {CommonModule} from '@angular/common';
 import {HttpBackend, HttpClientModule} from '@angular/common/http';
 import {AppRoutingModule} from './app-routing.module';
@@ -241,6 +241,10 @@ export function tabsFactory() {
         verzoekPluginSpecification,
       ],
     },
+    {
+      provide: CSP_NONCE,
+      useValue: 'randomNonceGoesHere'
+    }
   ],
   bootstrap: [AppComponent],
 })
