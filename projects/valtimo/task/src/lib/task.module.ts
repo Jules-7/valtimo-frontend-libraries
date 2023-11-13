@@ -23,6 +23,7 @@ import {NgbModule} from '@ng-bootstrap/ng-bootstrap';
 import {TranslateLoader, TranslateModule} from '@ngx-translate/core';
 import {
   CamundaFormModule,
+  CarbonListModule,
   FormIoModule,
   ListModule,
   ModalModule,
@@ -37,7 +38,7 @@ import {TaskDetailModalComponent} from './task-detail-modal/task-detail-modal.co
 import {TaskListComponent} from './task-list/task-list.component';
 import {TaskRoutingModule} from './task-routing.module';
 import {AssignUserToTaskComponent} from './assign-user-to-task/assign-user-to-task.component';
-import {LinkModule} from 'carbon-components-angular';
+import {ContentSwitcherModule, LinkModule, TabsModule} from 'carbon-components-angular';
 import {FormLinkModule} from '@valtimo/form-link';
 
 @NgModule({
@@ -46,6 +47,7 @@ import {FormLinkModule} from '@valtimo/form-link';
     CommonModule,
     TaskRoutingModule,
     ListModule,
+    CarbonListModule,
     PageHeaderModule,
     WidgetModule,
     SpinnerModule,
@@ -69,6 +71,8 @@ import {FormLinkModule} from '@valtimo/form-link';
     ModalModule,
     LinkModule,
     FormLinkModule,
+    TabsModule,
+    ContentSwitcherModule,
   ],
   exports: [TaskListComponent, TaskDetailModalComponent, AssignUserToTaskComponent],
 })

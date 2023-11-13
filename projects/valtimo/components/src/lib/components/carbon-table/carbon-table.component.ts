@@ -349,7 +349,7 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
       ? []
       : items.map((item: T, index: number) =>
           this.fields.map((column: ColumnConfig) => {
-            switch (column.viewType) {
+            switch (column.type) {
               case ViewType.ACTION:
                 return new TableItem({
                   data: {actions: column.actions, item},
@@ -392,7 +392,7 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
   }
 
   private setPaginationModel(pagination: Pagination): void {
-    this._tableModel.totalDataLength = pagination.collectionSize || this.data.length;
+    this._tableModel.totalDataLength = +pagination.collectionSize || this.data.length;
     this._tableModel.pageLength = pagination.size;
     this._tableModel.currentPage = pagination.page;
   }

@@ -1,0 +1,281 @@
+<!--
+  ~ Copyright 2015-2023 Ritense BV, the Netherlands.
+  ~
+  ~ Licensed under EUPL, Version 1.2 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~ https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" basis,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<cds-table-container
+  *ngIf="{
+    items: items$ | async,
+    fields: fields$ | async,
+    sort: sort$ | async
+  } as obs"
+>
+  <cds-table-header *ngIf="header">
+    <ng-content select="[header]"></ng-content>
+  </cds-table-header>
+
+  <ng-content select="[tabs]"></ng-content>
+
+  <cds-table-toolbar class="valtimo-carbon-table__toolbar" [batchText]="batchText$ | async">
+    <cds-table-toolbar-actions>
+      <ng-content select="[carbonToolbarActions]"> </ng-content>
+    </cds-table-toolbar-actions>
+
+    <cds-table-toolbar-content>
+      <cds-table-toolbar-search
+        *ngIf="isSearchable"
+        [expandable]="true"
+        [formControl]="searchFormControl"
+      ></cds-table-toolbar-search>
+
+      <ng-content select="[carbonToolbarContent]"> </ng-content>
+
+      <button
+        [cdsButton]="viewListAs === 'table' ? 'primary' : 'tertiary'"
+        [iconOnly]="true"
+        (click)="switchView('table')"
+      >
+        <svg cdsIcon="list" size="16" class="cds--btn__icon"></svg>
+      </button>
+
+      <button
+        [cdsButton]="viewListAs === 'tile' ? 'primary' : 'tertiary'"
+        [iconOnly]="true"
+        (click)="switchView('tile')"
+      >
+        <svg cdsIcon="border--full" size="16" class="cds--btn__icon"></svg>
+      </button>
+    </cds-table-toolbar-content>
+  </cds-table-toolbar>
+  <!--
+  <!-- <div *ngIf="(!!obs.items.length && !!obs.fields.length) || header">
+    <div
+      class="d-flex align-items-center search-holder bg-light"
+      [ngClass]="{'pb-4 pt-4': !header}"
+      *ngIf="isSearchable || viewMode || header"
+    >
+      <div class="align-self-start">
+        <ng-content select="[header]"></ng-content>
+      </div>
+
+      <div class="ml-auto row">
+        <input
+          *ngIf="isSearchable"
+          class="form-control col-sm-8"
+          type="text"
+          placeholder="{{ 'list.search' | translate }}"
+          #searchBox
+        />
+
+        <div
+          class="switch-view-holder btn-group col-sm-4 mt-1 mt-sm-0"
+          role="group"
+          *ngIf="viewMode"
+        >
+          <button
+            class="btn"
+            [ngClass]="viewListAs === 'table' ? 'btn-primary' : 'btn-default'"
+            (click)="switchView('table')"
+          >
+            <i class="icon mdi mdi-view-headline view-icon"></i>
+          </button>
+          <button
+            class="btn"
+            [ngClass]="viewListAs === 'tile' ? 'btn-primary' : 'btn-default'"
+            (click)="switchView('tile')"
+          >
+            <i class="icon mdi mdi-view-module view-icon"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div> -->
+  <table *ngIf="(!viewMode || viewListAs === 'table') && !!obs.sort" cdsTable>
+    <thead cdsTableHead>
+      <tr>
+        <!-- (click)="handleFieldClick(field.key, field.sortable)" -->
+        <!-- [ngClass]="{
+              sortable: field.sortable,
+              'is-being-sorted': field.key === obs.sort.state.name && obs.sort.isSorting,
+              ascending: obs.sort.state.direction === 'ASC'
+            }" -->
+        <th
+          *ngFor="let field of obs.fields"
+          cdsTableHeadCell
+          scope="col"
+          [ascending]="true"
+          [column]="field"
+          [sortable]="field.sortable"
+          (sort)="handleFieldClick(field.key, field.sortable)"
+        ></th>
+        <th
+          *ngIf="lastColumnTemplate"
+          scope="col"
+          cdsTableHeadCell
+          [column]="lastColumnHeaderItem"
+        ></th>
+        <!-- <th *ngFor="let action of actions">
+              {{ action.columnName }}
+            </th> -->
+      </tr>
+    </thead>
+
+    <tbody *ngIf="obs.items.length; else noResults" cdsTableBody>
+      <!-- [ngClass]="{'click-able': this.rowClicked.observers.length > 0}" -->
+      <tr
+        *ngFor="let itemRow of obs.items | listFilter: searchModel; let index = index"
+        cdsTableRow
+        [row]="itemRow"
+        (click)="onClickRow(items[index])"
+      >
+        <!-- DON'T FORGET CLASS_NAME -->
+        <td *ngFor="let item of itemRow" cdsTableData [item]="item"></td>
+        <!-- <ng-container
+              *ngIf="
+                listItemField.type === '' && {
+                  valueTranslationKey: 'viewTypeConverter.' + listItemField.value,
+                  valueTranslation: 'viewTypeConverter.' + listItemField.value | translate
+                } as vars
+              "
+            >
+              {{
+                listItemField.value
+                  ? vars.valueTranslation !== vars.valueTranslationKey
+                    ? vars.valueTranslation
+                    : listItemField.value
+                  : '-'
+              }}
+            </ng-container>
+
+            <ng-container
+              *ngIf="listItemField.type === 'dropdownActions'"
+              [ngTemplateOutlet]="dropdownActions"
+              [ngTemplateOutletContext]="{listItemField: listItemField, item: item}"
+            ></ng-container> -->
+        <!-- <td class="align-top" *ngFor="let action of actions">
+              <i
+                class="action-icon"
+                style="cursor: pointer"
+                [ngClass]="action.iconClass"
+                (click)="action.callback(item, $event)"
+              ></i>
+            </td> -->
+        <td *ngIf="lastColumnTemplate">
+          <ng-container
+            *ngTemplateOutlet="
+              lastColumnTemplate;
+              context: {index, length: obs.items.length, item: items}
+            "
+          ></ng-container>
+        </td>
+      </tr>
+      <!-- NO_RESULTS GOES HERE -->
+      <!-- <tr>
+            <td *ngIf="(items | listFilter: searchModel).length === 0" [colSpan]="fields.length">
+              {{ 'list.noMatchingItems' | translate }}<i>"{{ searchModel }}"</i>
+            </td>
+          </tr> -->
+    </tbody>
+
+    <ng-template #noResults>
+      <tbody cdsTableBody>
+        <tr>
+          <td [attr.colspan]="numberOfColumns" class="valtimo-carbon-list__no-results">
+            <ng-content></ng-content>
+          </td>
+          <td [attr.colspan]="numberOfColumns">
+            {{ 'list.noResults' | translate }}
+          </td>
+        </tr>
+      </tbody>
+    </ng-template>
+  </table>
+
+  <div class="container-fluid" *ngIf="viewMode && viewListAs === 'tile'">
+    <div class="row p-2">
+      <div
+        class="col-12 col-sm-6 col-xl-4 p-2"
+        *ngFor="let item of obs.items | listFilter: searchModel; let index = index"
+        (click)="onClickRow(items[index])"
+      >
+        <div class="click-able tile-holder p-4">
+          <dl class="row mb-0" *ngFor="let field of obs.fields; let index = index">
+            <dt class="col-12 col-md-5 text-xl-right">{{ field.data }}</dt>
+
+            <dd class="col-12 col-md-7">{{ item[index].data }}</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div *ngIf="!obs.items.length">
+        {{ 'list.noResults' | translate }}
+      </div>
+
+      <div class="col-12" *ngIf="!(obs.items | listFilter: searchModel).length && !!searchModel">
+        {{ 'list.noMatchingItems' | translate }}<i>"{{ searchModel }}"</i>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGINATION -->
+
+  <cds-pagination
+    *ngIf="paginationModel && obs.items.length"
+    [itemsPerPageOptions]="paginatorConfig.itemsPerPageOptions"
+    [model]="paginationModel"
+    [showPageInput]="paginatorConfig.showPageInput"
+    [translations]="paginationTranslations$ | async"
+    (selectPage)="onSelectPage($event)"
+  ></cds-pagination>
+  <!-- [skeleton]="loading" -->
+
+  <!-- SOME OTHER NO SHIT THING -->
+
+  <!-- <div id="no-results" class="p-5" *ngIf="items?.length === 0">
+    {{ 'list.noResults' | translate }}
+  </div>
+
+  <div id="no-field-definitions" class="p-5" *ngIf="items?.length > 0 && fields?.length === 0">
+    {{ 'list.noFieldDefinitions' | translate }}
+  </div> -->
+</cds-table-container>
+
+<!-- DROPDOWN ACTIONS -->
+
+<!-- <ng-template #dropdownActions let-listItemField="listItemField" let-item="item">
+  <div class="dropdown" *ngIf="listItemField?.value.length > 0">
+    <a
+      style="cursor: pointer"
+      class="dropdown-toggle d-block"
+      id="dropdownMenu"
+      data-toggle="dropdown"
+      aria-haspopup="true"
+      aria-expanded="false"
+    >
+      <i class="action-icon icon mdi mdi-dots-vertical"></i>
+    </a>
+    <div class="dropdown-menu" aria-labelledby="dropdownMenu">
+      <a
+        (click)="action.callback(item, $event)"
+        class="dropdown-item p-2"
+        *ngFor="let action of listItemField.value"
+      >
+        <ng-container *ngIf="action.iconClass !== null">
+          <i [ngClass]="action.iconClass"></i>
+        </ng-container>
+        {{ action?.label || '-' }}
+      </a>
+    </div>
+  </div>
+</ng-template> -->

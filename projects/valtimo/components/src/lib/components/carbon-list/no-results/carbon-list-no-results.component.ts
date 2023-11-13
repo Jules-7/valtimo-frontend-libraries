@@ -14,23 +14,17 @@
  * limitations under the License.
  */
 
-import {SortState} from '@valtimo/document';
+import {ChangeDetectionStrategy, Component, Input, TemplateRef} from '@angular/core';
 
-interface Pagination {
-  collectionSize: number | string;
-  page: number;
-  size: number;
-  sort?: SortState;
-  itemsPerPageOptions?: number[];
-  showPageInput?: boolean;
+@Component({
+  selector: 'valtimo-list-no-results',
+  templateUrl: './carbon-list-no-results.component.html',
+  styleUrls: ['./carbon-list-no-results.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class CarbonListNoResultsComponent {
+  @Input() action: TemplateRef<any>;
+  @Input() description: string;
+  @Input() illustration = 'valtimo-layout/img/no-results.svg';
+  @Input() title: string;
 }
-
-const DEFAULT_PAGINATION: Pagination = {
-  collectionSize: 0,
-  page: 1,
-  size: 10,
-  itemsPerPageOptions: [10, 20, 30, 40, 50],
-  showPageInput: true,
-};
-
-export {Pagination, DEFAULT_PAGINATION};

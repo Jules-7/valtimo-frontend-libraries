@@ -58,7 +58,7 @@ export class TaskListComponent implements OnDestroy {
     private documentService: DocumentService
   ) {
     this.visibleTabs = this.configService.config?.visibleTaskListTabs || null;
-    if (this.visibleTabs != null) {
+    if (!!this.visibleTabs) {
       this.currentTaskType = this.visibleTabs[0];
     }
     this.setDefaultSorting();
@@ -66,14 +66,15 @@ export class TaskListComponent implements OnDestroy {
 
   public paginationClicked(page: number, type: string) {
     this.tasks[type].page = page - 1;
+    this.tasks[type].pagination.page = page;
     this.getTasks(type);
   }
 
-  paginationSet() {
+  paginationSet(size: number) {
     this.tasks.mine.pagination.size =
       this.tasks.all.pagination.size =
       this.tasks.open.pagination.size =
-        this.tasks[this.currentTaskType].pagination.size;
+        size;
     this.getTasks(this.currentTaskType);
   }
 
@@ -83,7 +84,7 @@ export class TaskListComponent implements OnDestroy {
 
   tabChange(tab) {
     this.clearPagination(this.currentTaskType);
-    this.getTasks(tab.nextId);
+    this.getTasks(tab);
   }
 
   showTask(task) {
@@ -131,7 +132,12 @@ export class TaskListComponent implements OnDestroy {
     }
 
     this.taskService.queryTasks(params).subscribe((results: any) => {
-      this.tasks[type].pagination.collectionSize = results.headers.get('x-total-count');
+      // this.tasks[type].pagination.collectionSize = results.headers.get('x-total-count');
+      this.tasks[type].pagination = {
+        ...this.tasks[type].pagination,
+        // collectionSize: 4,
+        collectionSize: results.headers.get('x-total-count'),
+      };
       this.tasks[type].tasks = results.body as Array<Task>;
       this.tasks[type].tasks.map((task: Task) => {
         task.created = moment(task.created).format('DD MMM YYYY HH:mm');
@@ -139,6 +145,7 @@ export class TaskListComponent implements OnDestroy {
           task.due = moment(task.due).format('DD MMM YYYY HH:mm');
         }
       });
+
       if (this.taskService.getConfigCustomTaskList()) {
         this.customTaskListFields(type);
       } else {

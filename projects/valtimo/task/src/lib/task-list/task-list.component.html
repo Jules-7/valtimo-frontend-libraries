@@ -23,7 +23,7 @@
         [pagination]="tasks[currentTaskType].pagination"
         [viewMode]="true"
         (paginationClicked)="paginationClicked($event, currentTaskType)"
-        (paginationSet)="paginationSet()"
+        (paginationSet)="paginationSet($event)"
         paginationIdentifier="taskList"
         [isSearchable]="true"
         [header]="true"
@@ -56,6 +56,46 @@
         </div>
       </valtimo-list>
     </valtimo-widget>
+
+    <valtimo-widget>
+      <valtimo-carbon-list
+        [items]="tasks[currentTaskType].tasks"
+        [fields]="tasks[currentTaskType].fields"
+        [pagination]="tasks[currentTaskType].pagination"
+        [viewMode]="true"
+        (paginationClicked)="paginationClicked($event, currentTaskType)"
+        (paginationSet)="paginationSet($event)"
+        paginationIdentifier="taskList"
+        [isSearchable]="true"
+        [header]="true"
+        (rowClicked)="rowOpenTaskClick($event)"
+        (sortChanged)="sortChanged($event)"
+        [lastColumnTemplate]="caseLink"
+      >
+        <div header>
+          <h3 class="list-header-title">{{ listTitle }}</h3>
+          <h5 class="list-header-description">{{ listDescription }}</h5>
+        </div>
+
+        <div tabs>
+          <cds-tabs
+            *ngIf="visibleTabs === null; else configuredTabs"
+            type="contained"
+            class="valtimo-carbon-list__tabs"
+            data-carbon-theme="g10"
+          >
+            <cds-tab [heading]="'task-list.mine.title' | translate" (selected)="tabChange('mine')">
+            </cds-tab>
+
+            <cds-tab [heading]="'task-list.open.title' | translate" (selected)="tabChange('open')">
+            </cds-tab>
+
+            <cds-tab [heading]="'task-list.all.title' | translate" (selected)="tabChange('all')">
+            </cds-tab>
+          </cds-tabs>
+        </div>
+      </valtimo-carbon-list>
+    </valtimo-widget>
     <valtimo-task-detail-modal
       #taskDetail
       (formSubmit)="getTasks(currentTaskType)"
@@ -65,7 +105,15 @@
 </div>
 
 <ng-template #configuredTabs>
-  <ul ngbNav [destroyOnHide]="false" (navChange)="tabChange($event)" class="nav-tabs">
+  <cds-tabs type="contained" data-carbon-theme="g10" class="valtimo-carbon-list__tabs">
+    <cds-tab
+      *ngFor="let tab of visibleTabs"
+      [heading]="'task-list.' + tab + '.title' | translate"
+      (selected)="tabChange(tab)"
+    ></cds-tab>
+  </cds-tabs>
+
+  <!-- <ul ngbNav [destroyOnHide]="false" (navChange)="tabChange($event)" class="nav-tabs">
     <li
       *ngFor="let tab of visibleTabs"
       [ngbNavItem]="tab"
@@ -73,7 +121,7 @@
     >
       <a ngbNavLink>{{ 'task-list.' + tab + '.title' | translate }}</a>
     </li>
-  </ul>
+  </ul> -->
 </ng-template>
 
 <ng-template #caseLink let-index="index">

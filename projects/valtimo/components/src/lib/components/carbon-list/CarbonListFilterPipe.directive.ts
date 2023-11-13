@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-import {SortState} from '@valtimo/document';
+import {Pipe, PipeTransform} from '@angular/core';
+import {TableItem} from 'carbon-components-angular';
 
-interface Pagination {
-  collectionSize: number | string;
-  page: number;
-  size: number;
-  sort?: SortState;
-  itemsPerPageOptions?: number[];
-  showPageInput?: boolean;
+@Pipe({
+  name: 'listFilter',
+})
+export class CarbonListFilterPipe implements PipeTransform {
+  transform(list: TableItem[][], filterText: string): TableItem[][] {
+    list = list || [];
+
+    return !filterText
+      ? list
+      : list.filter((row: TableItem[]) =>
+          row.some((item: TableItem) =>
+            item.data.toString().toLowerCase().includes(filterText.toLowerCase())
+          )
+        );
+  }
 }
-
-const DEFAULT_PAGINATION: Pagination = {
-  collectionSize: 0,
-  page: 1,
-  size: 10,
-  itemsPerPageOptions: [10, 20, 30, 40, 50],
-  showPageInput: true,
-};
-
-export {Pagination, DEFAULT_PAGINATION};

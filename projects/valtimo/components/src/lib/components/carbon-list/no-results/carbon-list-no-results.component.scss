@@ -1,4 +1,4 @@
-/*
+/*!
  * Copyright 2015-2023 Ritense BV, the Netherlands.
  *
  * Licensed under EUPL, Version 1.2 (the "License");
@@ -14,23 +14,19 @@
  * limitations under the License.
  */
 
-import {SortState} from '@valtimo/document';
+.valtimo-no-results {
+  display: flex;
+  justify-content: center;
+  padding: calc((100 / 16) * 1rem) 0;
+  gap: 4rem;
 
-interface Pagination {
-  collectionSize: number | string;
-  page: number;
-  size: number;
-  sort?: SortState;
-  itemsPerPageOptions?: number[];
-  showPageInput?: boolean;
+  &__content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+
+  &__title {
+    font-size: 1.75rem;
+  }
 }
-
-const DEFAULT_PAGINATION: Pagination = {
-  collectionSize: 0,
-  page: 1,
-  size: 10,
-  itemsPerPageOptions: [10, 20, 30, 40, 50],
-  showPageInput: true,
-};
-
-export {Pagination, DEFAULT_PAGINATION};
