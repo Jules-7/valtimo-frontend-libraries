@@ -52,6 +52,7 @@ import {
   UploaderModule,
   VModalModule,
   WidgetModule,
+  CarbonListModule,
 } from '@valtimo/components';
 import {ConfigModule, HttpLoaderFactory} from '@valtimo/config';
 import {FormModule} from '@valtimo/form';
@@ -175,6 +176,7 @@ export type TabsFactory = () => Map<string, object>;
     DropdownModule,
     TabsModule,
     ComboBoxModule,
+    CarbonListModule,
   ],
   exports: [DossierListComponent, DossierDetailComponent],
 })

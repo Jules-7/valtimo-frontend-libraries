@@ -16,8 +16,6 @@
 
 <cds-table-container
   *ngIf="{
-    items: items$ | async,
-    fields: fields$ | async,
     sort: sort$ | async
   } as obs"
 >
@@ -27,7 +25,12 @@
 
   <ng-content select="[tabs]"></ng-content>
 
-  <cds-table-toolbar class="valtimo-carbon-table__toolbar" [batchText]="batchText$ | async">
+  <cds-table-toolbar
+    class="valtimo-carbon-table__toolbar"
+    [model]="model"
+    [batchText]="batchText$ | async"
+    (cancel)="onToolbarCancel()"
+  >
     <cds-table-toolbar-actions>
       <ng-content select="[carbonToolbarActions]"> </ng-content>
     </cds-table-toolbar-actions>
@@ -39,27 +42,29 @@
         [formControl]="searchFormControl"
       ></cds-table-toolbar-search>
 
+      <ng-container *ngIf="!loading">
+        <button
+          [cdsButton]="viewListAs === 'table' ? 'primary' : 'tertiary'"
+          [iconOnly]="true"
+          (click)="switchView('table')"
+        >
+          <svg cdsIcon="list" size="16" class="cds--btn__icon"></svg>
+        </button>
+
+        <button
+          [cdsButton]="viewListAs === 'tile' ? 'primary' : 'tertiary'"
+          [iconOnly]="true"
+          (click)="switchView('tile')"
+        >
+          <svg cdsIcon="border--full" size="16" class="cds--btn__icon"></svg>
+        </button>
+      </ng-container>
+
       <ng-content select="[carbonToolbarContent]"> </ng-content>
-
-      <button
-        [cdsButton]="viewListAs === 'table' ? 'primary' : 'tertiary'"
-        [iconOnly]="true"
-        (click)="switchView('table')"
-      >
-        <svg cdsIcon="list" size="16" class="cds--btn__icon"></svg>
-      </button>
-
-      <button
-        [cdsButton]="viewListAs === 'tile' ? 'primary' : 'tertiary'"
-        [iconOnly]="true"
-        (click)="switchView('tile')"
-      >
-        <svg cdsIcon="border--full" size="16" class="cds--btn__icon"></svg>
-      </button>
     </cds-table-toolbar-content>
   </cds-table-toolbar>
   <!--
-  <!-- <div *ngIf="(!!obs.items.length && !!obs.fields.length) || header">
+  <!-- <div *ngIf="(!!obs.items.length && !!model.header.length) || header">
     <div
       class="d-flex align-items-center search-holder bg-light"
       [ngClass]="{'pb-4 pt-4': !header}"
@@ -102,21 +107,34 @@
     </div>
   </div> -->
   <table *ngIf="(!viewMode || viewListAs === 'table') && !!obs.sort" cdsTable>
-    <thead cdsTableHead>
-      <tr>
-        <!-- (click)="handleFieldClick(field.key, field.sortable)" -->
-        <!-- [ngClass]="{
+    <thead
+      cdsTableHead
+      [model]="model"
+      [showSelectionColumn]="showSelectionColumn"
+      [selectAllCheckbox]="selectAllCheckbox"
+      [selectAllCheckboxSomeSelected]="selectAllCheckboxSomeSelected"
+      (sort)="handleFieldClick(model.header[$event])"
+      (selectAll)="selectAllChange()"
+      (deselectAll)="selectAllChange(false)"
+    >
+      <!-- FRESH COMMENT -->
+      <!-- <tr> -->
+
+      <!-- (click)="handleFieldClick(field.key, field.sortable)" -->
+      <!-- [ngClass]="{
               sortable: field.sortable,
               'is-being-sorted': field.key === obs.sort.state.name && obs.sort.isSorting,
               ascending: obs.sort.state.direction === 'ASC'
             }" -->
-        <th
-          *ngFor="let field of obs.fields"
+
+      <!-- FRESH COMMENT -->
+      <!-- <th
+          *ngFor="let column of model.header"
           cdsTableHeadCell
           scope="col"
           [ascending]="true"
-          [column]="field"
-          [sortable]="field.sortable"
+          [column]="column"
+          [sortable]="column.sortable"
           (sort)="handleFieldClick(field.key, field.sortable)"
         ></th>
         <th
@@ -124,24 +142,39 @@
           scope="col"
           cdsTableHeadCell
           [column]="lastColumnHeaderItem"
-        ></th>
-        <!-- <th *ngFor="let action of actions">
+        ></th> -->
+      <!-- <th *ngFor="let action of actions">
               {{ action.columnName }}
             </th> -->
-      </tr>
+
+      <!-- FRESH COMMENT -->
+      <!-- </tr> -->
     </thead>
 
-    <tbody *ngIf="obs.items.length; else noResults" cdsTableBody>
+    <tbody
+      *ngIf="model.data.length; else noResults"
+      cdsTableBody
+      [model]="model"
+      [showSelectionColumn]="showSelectionColumn"
+      (rowClick)="onClickRow(items[$event])"
+      (selectRow)="onSelectRow($event)"
+      (deselectRow)="onDeselectRow($event)"
+    >
       <!-- [ngClass]="{'click-able': this.rowClicked.observers.length > 0}" -->
-      <tr
-        *ngFor="let itemRow of obs.items | listFilter: searchModel; let index = index"
+
+      <!-- FRESH COMMENT -->
+
+      <!-- <tr
+        *ngFor="let itemRow of model.data | listFilter: searchModel; let index = index"
         cdsTableRow
         [row]="itemRow"
         (click)="onClickRow(items[index])"
-      >
-        <!-- DON'T FORGET CLASS_NAME -->
-        <td *ngFor="let item of itemRow" cdsTableData [item]="item"></td>
-        <!-- <ng-container
+      > -->
+      <!-- DON'T FORGET CLASS_NAME -->
+      <!-- FRESH COMMENT -->
+      <!-- <td *ngFor="let item of itemRow" cdsTableData [item]="item"></td> -->
+
+      <!-- <ng-container
               *ngIf="
                 listItemField.type === '' && {
                   valueTranslationKey: 'viewTypeConverter.' + listItemField.value,
@@ -163,7 +196,7 @@
               [ngTemplateOutlet]="dropdownActions"
               [ngTemplateOutletContext]="{listItemField: listItemField, item: item}"
             ></ng-container> -->
-        <!-- <td class="align-top" *ngFor="let action of actions">
+      <!-- <td class="align-top" *ngFor="let action of actions">
               <i
                 class="action-icon"
                 style="cursor: pointer"
@@ -171,15 +204,18 @@
                 (click)="action.callback(item, $event)"
               ></i>
             </td> -->
-        <td *ngIf="lastColumnTemplate">
+
+      <!-- FRESH COMMENT -->
+      <!-- <td *ngIf="lastColumnTemplate">
           <ng-container
             *ngTemplateOutlet="
               lastColumnTemplate;
-              context: {index, length: obs.items.length, item: items}
+              context: {index, length: model.data.length, item: items}
             "
           ></ng-container>
         </td>
-      </tr>
+      </tr> -->
+
       <!-- NO_RESULTS GOES HERE -->
       <!-- <tr>
             <td *ngIf="(items | listFilter: searchModel).length === 0" [colSpan]="fields.length">
@@ -206,23 +242,23 @@
     <div class="row p-2">
       <div
         class="col-12 col-sm-6 col-xl-4 p-2"
-        *ngFor="let item of obs.items | listFilter: searchModel; let index = index"
+        *ngFor="let item of model.data | listFilter: searchModel; let index = index"
         (click)="onClickRow(items[index])"
       >
         <div class="click-able tile-holder p-4">
-          <dl class="row mb-0" *ngFor="let field of obs.fields; let index = index">
-            <dt class="col-12 col-md-5 text-xl-right">{{ field.data }}</dt>
+          <dl class="row mb-0" *ngFor="let column of model.header; let index = index">
+            <dt class="col-12 col-md-5 text-xl-right">{{ column.data }}</dt>
 
             <dd class="col-12 col-md-7">{{ item[index].data }}</dd>
           </dl>
         </div>
       </div>
 
-      <div *ngIf="!obs.items.length">
+      <div *ngIf="!model.data.length">
         {{ 'list.noResults' | translate }}
       </div>
 
-      <div class="col-12" *ngIf="!(obs.items | listFilter: searchModel).length && !!searchModel">
+      <div class="col-12" *ngIf="!(model.data | listFilter: searchModel).length && !!searchModel">
         {{ 'list.noMatchingItems' | translate }}<i>"{{ searchModel }}"</i>
       </div>
     </div>
@@ -231,7 +267,7 @@
   <!-- PAGINATION -->
 
   <cds-pagination
-    *ngIf="paginationModel && obs.items.length"
+    *ngIf="paginationModel && model.data.length"
     [itemsPerPageOptions]="paginatorConfig.itemsPerPageOptions"
     [model]="paginationModel"
     [showPageInput]="paginatorConfig.showPageInput"

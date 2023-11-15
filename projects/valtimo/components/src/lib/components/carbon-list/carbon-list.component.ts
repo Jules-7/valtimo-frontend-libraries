@@ -35,8 +35,10 @@ import {
   IconService,
   PaginationModel,
   PaginationTranslations,
+  Table,
   TableHeaderItem,
   TableItem,
+  TableModel,
 } from 'carbon-components-angular';
 import {get as _get} from 'lodash';
 import {NGXLogger} from 'ngx-logger';
@@ -65,18 +67,25 @@ import {
   ViewType,
 } from '../../models';
 import {ViewContentService} from '../view-content/view-content.service';
+import {CarbonListFilterPipe} from './CarbonListFilterPipe.directive';
 
 @Component({
   selector: 'valtimo-carbon-list',
   templateUrl: './carbon-list.component.html',
   styleUrls: ['./carbon-list.component.scss'],
+  providers: [CarbonListFilterPipe],
 })
 export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit, OnDestroy {
   @HostBinding('attr.data-carbon-theme') public theme = 'g10';
+  @ViewChild('toolbar') public toolbar;
 
   private static PAGINATION_SIZE = 'PaginationSize';
 
+  public _model = new TableModel();
+  private _skeletonTableModel: TableModel = Table.skeletonModel(5, 5);
+
   private _items: Array<T>;
+  private _fullSource: TableItem[][];
   public items$ = new BehaviorSubject<TableItem[][]>([]);
   @Input() set items(value: Array<T>) {
     this._items = value;
@@ -84,7 +93,8 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
       return;
     }
 
-    this.items$.next(this.getTableItems());
+    this._model.data = this.getTableItems();
+    this._fullSource = this._model.data;
   }
   public get items(): Array<T> {
     return this._items;
@@ -98,32 +108,42 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
       this.translateService.stream(column.label)
     );
 
-    this.fields$ = combineLatest(translationStreams).pipe(
-      switchMap(translationResults =>
-        this.sort$.pipe(map((sortState: SortState) => ({translationResults, sortState})))
-      ),
-      map((res: {translationResults: string[]; sortState: SortState}) => [
-        ...res.translationResults.map(
-          (translation: string, index: number) =>
-            new TableHeaderItem({
-              data: translation,
-              sortable: !!value[index].sortable,
-              className: value[index].className ?? '',
-              key: value[index].key,
-              sorted: res.sortState.isSorting && value[index].key === res.sortState.state.name,
-              ascending:
-                value[index].key === res.sortState.state.name &&
-                res.sortState.state.direction === 'ASC',
-            })
-        ),
-      ])
+    this._subscriptions.add(
+      combineLatest(translationStreams)
+        .pipe(
+          switchMap(translationResults =>
+            this.sort$.pipe(map((sortState: SortState) => ({translationResults, sortState})))
+          ),
+          map((res: {translationResults: string[]; sortState: SortState}) => [
+            ...res.translationResults.map(
+              (translation: string, index: number) =>
+                new TableHeaderItem({
+                  data: translation,
+                  sortable: !!value[index].sortable,
+                  className: value[index].className ?? '',
+                  key: value[index].key,
+                  sorted: res.sortState.isSorting && value[index].key === res.sortState.state.name,
+                  ascending:
+                    value[index].key === res.sortState.state.name &&
+                    res.sortState.state.direction === 'ASC',
+                })
+            ),
+          ])
+        )
+        .subscribe((header: TableHeaderItem[]) => {
+          this._model.header = !this.lastColumnTemplate
+            ? header
+            : [...header, new TableHeaderItem({data: '', key: ''})];
+          console.log(this._model.header);
+        })
     );
 
-    if (!this._items.length) {
+    if (!this._items?.length) {
       return;
     }
 
-    this.items$.next(this.getTableItems());
+    this._model.data = this.getTableItems();
+    // this.items$.next(this.getTableItems());
   }
 
   private readonly _defaultTranslations: CarbonTableTranslations = {
@@ -180,6 +200,7 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     if (!this._pagination) {
       this._pagination = {...DEFAULT_PAGINATION, ...value};
     }
+
     this._pagination = {...this._pagination, ...value};
     this.buildPaginationModel();
   }
@@ -192,8 +213,10 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
   @Input() actions: any[] = [];
   @Input() paginationIdentifier?: string;
   @Input() initialSortState: SortState;
+  @Input() showSelectionColumn: boolean;
   public lastColumnHeaderItem: TableHeaderItem;
   @Input() lastColumnTemplate?: TemplateRef<any>;
+  @Input() loading = false;
 
   @Output() rowClicked = new EventEmitter<any>();
   @Output() paginationClicked = new EventEmitter<number>();
@@ -204,7 +227,6 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
   public headerProvided = false;
   public viewListAs: string;
   public searchModel: string;
-  @ViewChild('searchBox') searchBox: ElementRef;
 
   readonly sort$ = new BehaviorSubject<SortState>({
     state: {name: '', direction: 'DESC'},
@@ -219,21 +241,30 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     return this._fields?.length + (this.lastColumnTemplate ? 1 : 0);
   }
 
+  public get model(): TableModel {
+    return this.loading ? this._skeletonTableModel : this._model;
+  }
+
+  public get selectedItems(): T[] {
+    return this._model.data.reduce(
+      (items: T[], _, index: number) =>
+        this._model.isRowSelected(index) ? [...items, this.items[index]] : [...items],
+      []
+    );
+  }
+
   constructor(
     private translateService: TranslateService,
     private viewContentService: ViewContentService,
     private logger: NGXLogger,
-    private readonly iconService: IconService
+    private readonly iconService: IconService,
+    private readonly filterPipe: CarbonListFilterPipe
   ) {
     this.viewListAs = localStorage.getItem('viewListAs') || 'table';
 
     this.iconService.registerAll([BorderFull16, List16]);
   }
   public ngOnInit(): void {
-    if (this.lastColumnTemplate) {
-      this.lastColumnHeaderItem = new TableHeaderItem({data: '', key: ''});
-    }
-
     if (this.pagination) {
       this.loadPaginationSize();
     }
@@ -249,36 +280,25 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
           if (this.search.observed) {
             this.search.emit(searchString);
           } else {
+            //to remove when deprecating viewMode 'tile'
             this.searchModel = searchString ?? '';
+            this._model.data = this.filterPipe.transform(this._fullSource, this.searchModel);
           }
         })
     );
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
-    // if (changes.items && changes.items.currentValue) {
-    //   this.transformListItemsMatchFields();
-    // }
-
     if (changes?.initialSortState?.currentValue) {
       this.sort$.next(changes?.initialSortState?.currentValue);
     }
   }
 
   public ngAfterViewInit(): void {
-    // if (this.isSearchable) {
-    //   fromEvent(this.searchBox.nativeElement, 'keyup')
-    //     .pipe(debounceTime(500))
-    //     .subscribe(() => {
-    //       const value = this.searchBox.nativeElement.value;
-    //       if (this.search.observed) {
-    //         // custom search callbak is specified, perhaps to query on the server side
-    //         this.search.emit(value);
-    //       } else {
-    //         this.searchModel = value;
-    //       }
-    //     });
+    // if (!this.lastColumnTemplate || !this._fields) {
+    //   return;
     // }
+    // this.setLastColumnTemplate();
   }
 
   public ngOnDestroy(): void {
@@ -308,10 +328,43 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
       return;
     }
 
-    this.onClickPagination(page);
+    this.paginationClicked.emit(page);
   }
 
-  public handleFieldClick(key: string, sortable: boolean): void {
+  public selectAllCheckbox = false;
+  public selectAllCheckboxSomeSelected = false;
+
+  public selectAllChange(select = true): void {
+    this._model.selectAll(select);
+    this.updateSelectState();
+  }
+
+  public onSelectRow(event: {model: TableModel; selectedRowIndex: number}): void {
+    const {selectedRowIndex} = event;
+    this._model.selectRow(selectedRowIndex);
+    this.updateSelectState();
+  }
+
+  public onDeselectRow(event: {model: TableModel; deselectedRowIndex: number}): void {
+    const {deselectedRowIndex} = event;
+    this._model.selectRow(deselectedRowIndex, false);
+    this.updateSelectState();
+  }
+
+  private updateSelectState(): void {
+    const selectedCount: number = this._model.selectedRowsCount();
+    this.selectAllCheckboxSomeSelected =
+      selectedCount > 0 && selectedCount < this._model.data.length;
+
+    this.selectAllCheckbox = selectedCount === this._model.data.length;
+  }
+
+  public onToolbarCancel(): void {
+    this.selectAllChange(false);
+  }
+
+  public handleFieldClick(headerItem: TableHeaderItem & {key: string}): void {
+    const {key, sortable} = headerItem;
     if (!sortable) {
       return;
     }
@@ -374,8 +427,9 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
   }
 
   private getTableItems(): TableItem[][] {
-    return this._items.map((item: T, index: number) =>
-      this._fields.map((column: ColumnConfig) => {
+    const length = this._items.length;
+    return this._items.map((item: T, index: number) => {
+      const fields = this._fields.map((column: ColumnConfig, columnIndex: number) => {
         switch (column.type) {
           // case ViewType.ACTION:
           //   return new TableItem({
@@ -384,14 +438,30 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
           //   });
           case ViewType.TEMPLATE:
             return new TableItem({
-              data: {item, index},
+              data: {item, index, length},
               template: column.template,
             });
           default:
             return new TableItem({data: this.resolveObject(column, item) ?? '-'});
         }
-      })
-    );
+      });
+      // if (columnIndex === this._fields.length - 1 && !!this.lastColumnTemplate) {
+      //   return new TableItem({
+      //     data: {item, index},
+      //     template: this.lastColumnTemplate,
+      //   });
+      // }
+
+      return !this.lastColumnTemplate
+        ? fields
+        : [
+            ...fields,
+            new TableItem({
+              data: {item, index, length},
+              template: this.lastColumnTemplate,
+            }),
+          ];
+    });
   }
 
   // private transformListItemsMatchFields() {
@@ -412,14 +482,11 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
       `${this.paginationIdentifier}${CarbonListComponent.PAGINATION_SIZE}`,
       numberOfEntries
     );
-    this.pagination = {size: +numberOfEntries};
+    // this.pagination = {size: +numberOfEntries};
     // this.pagination.size = +numberOfEntries;
     this.logger.debug('Pagination set in local storage for this list: ', numberOfEntries);
     this.paginationSet.emit(numberOfEntries);
   }
 
-  private onClickPagination(page: number) {
-    this.pagination = {page};
-    this.paginationClicked.emit(page);
-  }
+  private templateSet = false;
 }

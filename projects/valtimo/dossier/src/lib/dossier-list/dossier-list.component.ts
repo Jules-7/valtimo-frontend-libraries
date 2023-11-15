@@ -18,25 +18,22 @@ import {ActivatedRoute, Params, Router} from '@angular/router';
 import {TranslateService} from '@ngx-translate/core';
 import {
   BreadcrumbService,
+  CarbonListComponent,
   CarbonPaginationSelection,
-  CarbonPaginatorConfig,
-  CarbonTableComponent,
-  CarbonTableConfig,
   CarbonTableTranslations,
-  ColumnConfig,
-  Direction,
   ListField,
   PageTitleService,
   Pagination,
-  SortState,
 } from '@valtimo/components';
 import {
   AssigneeFilter,
   ConfigService,
   DefinitionColumn,
+  Direction,
   DossierListTab,
   SearchField,
   SearchFieldValues,
+  SortState,
 } from '@valtimo/config';
 import {
   AdvancedDocumentSearchRequest,
@@ -59,6 +56,7 @@ import {
   take,
   tap,
 } from 'rxjs';
+
 import {DefaultTabs} from '../dossier-detail-tab-enum';
 import {DossierListActionsComponent} from '../dossier-list-actions/dossier-list-actions.component';
 import {
@@ -85,7 +83,7 @@ import {
   ],
 })
 export class DossierListComponent implements OnInit, OnDestroy {
-  @ViewChild(CarbonTableComponent) carbonTable: CarbonTableComponent<Document>;
+  @ViewChild(CarbonListComponent) carbonList: CarbonListComponent<Document>;
   @ViewChild(DossierListActionsComponent) listActionsComponent: DossierListActionsComponent;
   @ViewChild(Tabs) tabsComponent: Tabs;
 
@@ -95,6 +93,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
   public loadingAssigneeFilter = true;
   public loadingDocumentItems = true;
   public pagination!: Pagination;
+  public canHaveAssignee!: boolean;
   public visibleDossierTabs: Array<DossierListTab> | null = null;
 
   public readonly defaultTabs: DossierListTab[] = [
@@ -112,11 +111,6 @@ export class DossierListComponent implements OnInit, OnDestroy {
       itemsPerPage: 'dossier.pagination.itemsPerPage',
       totalItems: 'dossier.pagination.totalItems',
     },
-  };
-
-  public tableConfig: CarbonTableConfig;
-  public readonly paginatorConfig: CarbonPaginatorConfig = {
-    itemsPerPageOptions: [10, 25, 50, 100],
   };
 
   public readonly showAssignModal$ = new BehaviorSubject<boolean>(false);
@@ -145,6 +139,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
     })
   );
 
+  public showSelectionColumn: boolean;
   public readonly searchFieldValues$ = this.parameterService.searchFieldValues$;
   public readonly assigneeFilter$: Observable<AssigneeFilter> =
     this.assigneeService.assigneeFilter$;
@@ -153,10 +148,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
   public readonly canHaveAssignee$: Observable<boolean> =
     this.assigneeService.canHaveAssignee$.pipe(
       tap((showSelectionColumn: boolean) => {
-        this.tableConfig = {
-          showSelectionColumn,
-          withPagination: true,
-        };
+        this.showSelectionColumn = showSelectionColumn;
       })
     );
   private readonly _pagination$ = this.paginationService.pagination$.pipe(
@@ -168,6 +160,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
   private readonly _reload$ = new BehaviorSubject<boolean>(false);
   private readonly _hasEnvColumnConfig$: Observable<boolean> = this.listService.hasEnvColumnConfig$;
   private readonly _hasApiColumnConfig$ = new BehaviorSubject<boolean>(false);
+  private readonly _canHaveAssignee$: Observable<boolean> = this.assigneeService.canHaveAssignee$;
   private readonly _searchSwitch$ = this.searchService.searchSwitch$;
   private readonly _columns$: Observable<Array<DefinitionColumn>> =
     this.listService.documentDefinitionName$.pipe(
@@ -180,28 +173,30 @@ export class DossierListComponent implements OnInit, OnDestroy {
       }),
       tap(columns => {
         this.listService.documentDefinitionName$.pipe(take(1)).subscribe(documentDefinitionName => {
-          this.paginationService.setPagination(columns);
+          this.paginationService.setPagination(documentDefinitionName, columns);
         });
       })
     );
 
   public readonly fields$: Observable<Array<ListField>> = combineLatest([
-    this.canHaveAssignee$,
+    this._canHaveAssignee$,
     this._columns$,
     this._hasEnvColumnConfig$,
     this.translateService.stream('key'),
   ]).pipe(
+    tap(([canHaveAssignee]) => {
+      this.canHaveAssignee = canHaveAssignee;
+    }),
     map(([canHaveAssignee, columns, hasEnvConfig]) => {
       const filteredAssigneeColumns = this.assigneeService.filterAssigneeColumns(
         columns,
         canHaveAssignee
       );
-      const listFields = this.columnService.mapDefinitionColumnsToColumnConfigs(
+      const listFields = this.columnService.mapDefinitionColumnsToListFields(
         filteredAssigneeColumns,
         hasEnvConfig
       );
-
-      const fieldsToReturn = this.assigneeService.addAssigneeColumnConfig(
+      const fieldsToReturn = this.assigneeService.addAssigneeListField(
         columns,
         listFields,
         canHaveAssignee
@@ -209,8 +204,9 @@ export class DossierListComponent implements OnInit, OnDestroy {
 
       return fieldsToReturn;
     }),
-    tap((fields: ColumnConfig[]) => {
-      const defaultListField = fields.find((field: ColumnConfig) => field.default);
+    tap(listFields => {
+      const defaultListField = listFields.find(field => field.default);
+
       // set default sort state if no pagination query parameters for sorting are available
       this.parameterService.queryPaginationParams$
         .pipe(take(1))
@@ -373,7 +369,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
     this.searchService.search(searchFieldValues);
   }
 
-  public onRowClick(document: any): void {
+  public rowClick(document: any): void {
     this.listService.documentDefinitionName$.pipe(take(1)).subscribe(documentDefinitionName => {
       this.breadcrumbService.cacheQueryParams(
         `/dossiers/${documentDefinitionName}`,
@@ -383,19 +379,6 @@ export class DossierListComponent implements OnInit, OnDestroy {
         `/dossiers/${documentDefinitionName}/document/${document.id}/${DefaultTabs.summary}`,
       ]);
     });
-  }
-
-  public onPaginationChange(pagination: CarbonPaginationSelection): void {
-    if (this.carbonTable.tableModel.selectedRowsCount()) {
-      this.showChangePageModal$.next(true);
-      this.paginationChange$.next(pagination);
-      return;
-    }
-    this.onChangePageConfirm(pagination);
-  }
-
-  public onSortChange(newSortState: SortState): void {
-    this.paginationService.sortChanged(newSortState);
   }
 
   public tabChange(tab: DossierListTab): void {
@@ -408,7 +391,8 @@ export class DossierListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    if (this.carbonTable.tableModel.selectedRowsCount()) {
+    console.log(this.carbonList.model.selectedRowsCount());
+    if (this.carbonList.model.selectedRowsCount()) {
       this.showChangeTabModal$.next(true);
       this.tabChange$.next(tab);
       return;
@@ -431,6 +415,28 @@ export class DossierListComponent implements OnInit, OnDestroy {
     prevTab.active = true;
   }
 
+  public pageChange(page: number): void {
+    if (this.carbonList?.model.selectedRowsCount()) {
+      this.showChangePageModal$.next(true);
+      this.paginationChange$.next({page, size: this.pagination.size});
+      return;
+    }
+    this.paginationService.pageChange(page);
+  }
+
+  public pageSizeChange(size: number): void {
+    if (this.carbonList?.model.selectedRowsCount()) {
+      this.showChangePageModal$.next(true);
+      this.paginationChange$.next({page: this.pagination.page, size});
+      return;
+    }
+    this.paginationService.pageSizeChange(size);
+  }
+
+  public sortChanged(newSortState: SortState): void {
+    this.paginationService.sortChanged(newSortState);
+  }
+
   private onChangeTabConfirm(tab: DossierListTab): void {
     this.loadingAssigneeFilter = true;
     this._previousTab = tab;
@@ -444,7 +450,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
 
   public showAssignModal(): void {
     this.selectedDocumentIds$.next(
-      this.carbonTable.selectedItems.map((document: Document) => document.id)
+      this.carbonList.selectedItems.map((document: Document) => document.id)
     );
     this.showAssignModal$.next(true);
   }
