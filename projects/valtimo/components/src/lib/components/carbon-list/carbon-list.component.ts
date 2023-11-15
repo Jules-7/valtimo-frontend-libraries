@@ -305,7 +305,12 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     this._subscriptions.unsubscribe();
   }
 
-  public onClickRow(item: T): void {
+  public onClickRow(index: number): void {
+    const item = this.model.data[index][0]['item'];
+
+    if (!item) {
+      return;
+    }
     this.rowClicked.emit(item);
   }
 
@@ -442,7 +447,7 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
               template: column.template,
             });
           default:
-            return new TableItem({data: this.resolveObject(column, item) ?? '-'});
+            return new TableItem({data: this.resolveObject(column, item) ?? '-', item});
         }
       });
       // if (columnIndex === this._fields.length - 1 && !!this.lastColumnTemplate) {

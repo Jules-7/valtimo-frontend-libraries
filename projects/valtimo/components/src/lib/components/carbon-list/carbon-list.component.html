@@ -156,7 +156,7 @@
       cdsTableBody
       [model]="model"
       [showSelectionColumn]="showSelectionColumn"
-      (rowClick)="onClickRow(items[$event])"
+      (rowClick)="onClickRow($event)"
       (selectRow)="onSelectRow($event)"
       (deselectRow)="onDeselectRow($event)"
     >
