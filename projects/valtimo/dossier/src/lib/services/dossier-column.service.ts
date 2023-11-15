@@ -69,7 +69,7 @@ export class DossierColumnService {
         key: hasEnvConfig ? column.propertyName : column.translationKey,
         label: column.title || validTranslation || column.translationKey,
         sortable: column.sortable,
-        ...(column.viewType && {type: column.viewType}),
+        ...(column.viewType && {viewType: column.viewType}),
         ...(column.enum && {enum: column.enum}),
         ...(column.format && {format: column.format}),
         ...(column.default && {default: column.default}),

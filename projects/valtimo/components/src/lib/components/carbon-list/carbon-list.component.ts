@@ -430,7 +430,7 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     const length = this._items.length;
     return this._items.map((item: T, index: number) => {
       const fields = this._fields.map((column: ColumnConfig, columnIndex: number) => {
-        switch (column.type) {
+        switch (column.viewType) {
           // case ViewType.ACTION:
           //   return new TableItem({
           //     data: {actions: column.actions, item},

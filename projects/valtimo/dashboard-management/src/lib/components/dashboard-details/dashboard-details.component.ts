@@ -145,19 +145,19 @@ export class DashboardDetailsComponent implements AfterViewInit {
   private setFields(): void {
     this.fields = [
       {
-        type: ViewType.TEXT,
+        viewType: ViewType.TEXT,
         key: 'title',
         label: 'Name',
       },
       {
-        type: ViewType.TEMPLATE,
+        viewType: ViewType.TEMPLATE,
         template: this.moveButtonsTemplate,
         className: 'dashboard-detail-table__actions',
         key: '',
         label: '',
       },
       {
-        type: ViewType.ACTION,
+        viewType: ViewType.ACTION,
         className: 'dashboard-detail-table__actions',
         key: '',
         label: '',

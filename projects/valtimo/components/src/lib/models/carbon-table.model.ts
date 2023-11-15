@@ -64,7 +64,7 @@ interface ActionItem {
 }
 
 interface ColumnConfig extends ListField {
-  type: string | ViewType;
+  viewType: string | ViewType;
   actions?: ActionItem[];
   className?: string;
   format?: string;
@@ -85,7 +85,7 @@ const DEFAULT_TABLE_CONFIG: CarbonTableConfig = {
 interface ListField {
   key: string;
   label: string;
-  type: string;
+  viewType?: string;
   default?: string | boolean;
   sortable?: boolean;
 }

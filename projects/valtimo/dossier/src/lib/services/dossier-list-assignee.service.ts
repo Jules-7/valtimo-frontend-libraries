@@ -93,7 +93,7 @@ export class DossierListAssigneeService {
               key: this.ASSIGNEE_KEY,
               label: this.translateService.instant(`fieldLabels.${this.ASSIGNEE_KEY}`),
               sortable: true,
-              type: 'string',
+              viewType: 'string',
             },
           ]
         : []),

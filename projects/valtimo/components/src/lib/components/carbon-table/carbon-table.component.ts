@@ -349,7 +349,7 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
       ? []
       : items.map((item: T, index: number) =>
           this.fields.map((column: ColumnConfig) => {
-            switch (column.type) {
+            switch (column.viewType) {
               case ViewType.ACTION:
                 return new TableItem({
                   data: {actions: column.actions, item},
