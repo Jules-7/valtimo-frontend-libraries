@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   HostBinding,
@@ -25,7 +26,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import {FormControl} from '@angular/forms';
-import {BorderFull16, List16} from '@carbon/icons';
+import {SettingsView16} from '@carbon/icons';
 import {TranslateService} from '@ngx-translate/core';
 import {SortState} from '@valtimo/document';
 import {
@@ -55,9 +56,9 @@ import {
 } from 'rxjs';
 
 import {
-  CarbonPaginatorConfig,
   CarbonListBatchText,
   CarbonListTranslations,
+  CarbonPaginatorConfig,
   ColumnConfig,
   DEFAULT_LIST_TRANSLATIONS,
   DEFAULT_PAGINATION,
@@ -75,28 +76,22 @@ import {CarbonListFilterPipe} from './CarbonListFilterPipe.directive';
   providers: [CarbonListFilterPipe],
 })
 export class CarbonListComponent<T> implements OnInit, OnDestroy {
-  @HostBinding('attr.data-carbon-theme') public theme = 'g10';
+  @HostBinding('attr.data-carbon-theme') theme = 'g10';
   @ViewChild('actionsMenu') actionsMenu: TemplateRef<OverflowMenu>;
-  @ViewChild(TableToolbar) toolbar;
 
-  private static PAGINATION_SIZE = 'PaginationSize';
-
-  public _model = new TableModel();
-  private _skeletonTableModel: TableModel = Table.skeletonModel(5, 5);
-
-  private _items: Array<T>;
-  private _fullSource: TableItem[][];
+  private _completeDataSource: TableItem[][];
+  private _items: T[];
   public items$ = new BehaviorSubject<TableItem[][]>([]);
-  @Input() set items(value: Array<T>) {
+  @Input() set items(value: T[]) {
     this._items = value;
     if (!this._fields) {
       return;
     }
 
-    this._model.data = this.getTableItems();
-    this._fullSource = this._model.data;
+    this._model.data = this.buildTableItems();
+    this._completeDataSource = this._model.data;
   }
-  public get items(): Array<T> {
+  public get items(): T[] {
     return this._items;
   }
 
@@ -104,44 +99,13 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
   public fields$: Observable<TableHeaderItem[]> = of([]);
   @Input() set fields(value: ColumnConfig[]) {
     this._fields = value;
-    const translationStreams: Observable<string>[] = value.map((column: ColumnConfig) =>
-      !column.label ? of('') : this.translateService.stream(column.label)
-    );
-
-    this._subscriptions.add(
-      combineLatest(translationStreams)
-        .pipe(
-          switchMap(translationResults =>
-            this.sort$.pipe(map((sortState: SortState) => ({translationResults, sortState})))
-          ),
-          map((res: {translationResults: string[]; sortState: SortState}) => [
-            ...res.translationResults.map(
-              (translation: string, index: number) =>
-                new TableHeaderItem({
-                  data: translation,
-                  sortable: !!value[index].sortable,
-                  className: value[index].className ?? '',
-                  key: value[index].key,
-                  sorted: res.sortState.isSorting && value[index].key === res.sortState.state.name,
-                  ascending:
-                    value[index].key === res.sortState.state.name &&
-                    res.sortState.state.direction === 'ASC',
-                })
-            ),
-          ])
-        )
-        .subscribe((header: TableHeaderItem[]) => {
-          this._model.header = !this.lastColumnTemplate
-            ? header
-            : [...header, new TableHeaderItem({data: '', key: ''})];
-        })
-    );
+    this.buildHeaderItems(value);
 
     if (!this._items?.length) {
       return;
     }
 
-    this._model.data = this.getTableItems();
+    this._model.data = this.buildTableItems();
   }
 
   private _tableTranslations$: BehaviorSubject<CarbonListTranslations> = new BehaviorSubject(
@@ -151,23 +115,35 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     this._tableTranslations$.next({...DEFAULT_LIST_TRANSLATIONS, ...value});
   }
 
-  public paginationTranslations$: Observable<Partial<PaginationTranslations>> =
-    this._tableTranslations$.pipe(
-      switchMap((translations: CarbonListTranslations) =>
-        combineLatest([
-          this.translateService.stream(translations.pagination.itemsPerPage),
-          this.translateService.stream(translations.pagination.totalItems),
-          this.translateService.stream('interface.table.ofLastPage'),
-          this.translateService.stream('interface.table.ofLastPages'),
-        ])
-      ),
-      map(([ITEMS_PER_PAGE, TOTAL_ITEMS, OF_LAST_PAGE, OF_LAST_PAGES]) => ({
-        ITEMS_PER_PAGE,
-        TOTAL_ITEMS,
-        OF_LAST_PAGE,
-        OF_LAST_PAGES,
-      }))
-    );
+  @Input() paginatorConfig: CarbonPaginatorConfig = DEFAULT_PAGINATOR_CONFIG;
+  private _pagination: Pagination;
+  @Input() public set pagination(value: Partial<Pagination>) {
+    if (!this._pagination) {
+      this._pagination = {...DEFAULT_PAGINATION, ...value};
+    }
+
+    this._pagination = {...this._pagination, ...value};
+    this.buildPaginationModel();
+  }
+  public get pagination(): Pagination {
+    return this._pagination;
+  }
+
+  @Input() actions: any[] = [];
+  @Input() header: boolean;
+  @Input() initialSortState: SortState;
+  @Input() isSearchable: boolean;
+  @Input() lastColumnTemplate?: TemplateRef<any>;
+  @Input() loading = false;
+  @Input() paginationIdentifier?: string;
+  @Input() showSelectionColumn: boolean;
+  @Input() viewMode: boolean;
+
+  @Output() rowClicked = new EventEmitter<any>();
+  @Output() paginationClicked = new EventEmitter<number>();
+  @Output() paginationSet = new EventEmitter<any>();
+  @Output() search = new EventEmitter<any>();
+  @Output() sortChanged = new EventEmitter<SortState>();
 
   public batchText$: Observable<CarbonListBatchText> = this._tableTranslations$.pipe(
     switchMap((translations: CarbonListTranslations) =>
@@ -184,56 +160,67 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     map(([SINGLE, MULTIPLE]) => ({SINGLE, MULTIPLE}))
   );
 
-  public paginationModel: PaginationModel;
-  @Input() paginatorConfig: CarbonPaginatorConfig = DEFAULT_PAGINATOR_CONFIG;
-  private _pagination: Pagination;
-  @Input() public set pagination(value: Partial<Pagination>) {
-    if (!this._pagination) {
-      this._pagination = {...DEFAULT_PAGINATION, ...value};
-    }
+  public paginationTranslations$: Observable<Partial<PaginationTranslations>> =
+    this._tableTranslations$.pipe(
+      switchMap((translations: CarbonListTranslations) =>
+        combineLatest([
+          this.translateService.stream(translations.pagination.itemsPerPage),
+          this.translateService.stream(translations.pagination.totalItems),
+          this.translateService.stream('interface.list.ofLastPage'),
+          this.translateService.stream('interface.list.ofLastPages'),
+        ])
+      ),
+      map(([ITEMS_PER_PAGE, TOTAL_ITEMS, OF_LAST_PAGE, OF_LAST_PAGES]) => ({
+        ITEMS_PER_PAGE,
+        TOTAL_ITEMS,
+        OF_LAST_PAGE,
+        OF_LAST_PAGES,
+      }))
+    );
 
-    this._pagination = {...this._pagination, ...value};
-    this.buildPaginationModel();
-  }
-  public get pagination(): Pagination {
-    return this._pagination;
-  }
-  @Input() viewMode?: boolean;
-  @Input() isSearchable?: boolean;
-  @Input() header?: boolean;
-  @Input() actions: any[] = [];
-  @Input() paginationIdentifier?: string;
-  @Input() initialSortState: SortState;
-  @Input() showSelectionColumn: boolean;
-  public lastColumnHeaderItem: TableHeaderItem;
-  @Input() lastColumnTemplate?: TemplateRef<any>;
-  @Input() loading = false;
-
-  @Output() rowClicked = new EventEmitter<any>();
-  @Output() paginationClicked = new EventEmitter<number>();
-  @Output() paginationSet = new EventEmitter<any>();
-  @Output() search = new EventEmitter<any>();
-  @Output() sortChanged = new EventEmitter<SortState>();
-
-  public headerProvided = false;
-  public viewListAs: string;
-  public searchModel: string;
-
-  readonly sort$ = new BehaviorSubject<SortState>({
+  public readonly sort$ = new BehaviorSubject<SortState>({
     state: {name: '', direction: 'DESC'},
     isSorting: false,
   });
 
+  public readonly ViewType = ViewType;
+  public paginationModel: PaginationModel;
   public searchFormControl = new FormControl('');
+  public searchModel: string;
+  public viewListAs: string;
 
+  private static readonly PAGINATION_SIZE = 'PaginationSize';
+  private readonly _model = new TableModel();
+  private readonly _skeletonTableModel: TableModel = Table.skeletonModel(5, 5);
   private readonly _subscriptions = new Subscription();
 
   public get numberOfColumns(): number {
-    return this._fields?.length + (this.lastColumnTemplate ? 1 : 0);
+    return (
+      this._fields?.length + (this.lastColumnTemplate ? 1 : 0) + (this.showSelectionColumn ? 1 : 0)
+    );
   }
 
   public get model(): TableModel {
     return this.loading ? this._skeletonTableModel : this._model;
+  }
+
+  public get selectAllCheckbox(): boolean {
+    if (!this.model || this.loading) {
+      return false;
+    }
+
+    return (
+      !!this.model.totalDataLength && this.model.selectedRowsCount() === this.model.totalDataLength
+    );
+  }
+
+  public get selectAllCheckboxSomeSelected(): boolean {
+    if (!this.model || this.loading) {
+      return false;
+    }
+
+    const selectedCount = this.model.selectedRowsCount();
+    return selectedCount > 0 && selectedCount < this.model.totalDataLength;
   }
 
   public get selectedItems(): T[] {
@@ -245,16 +232,18 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
   }
 
   constructor(
-    private translateService: TranslateService,
-    private viewContentService: ViewContentService,
-    private logger: NGXLogger,
+    private readonly filterPipe: CarbonListFilterPipe,
     private readonly iconService: IconService,
-    private readonly filterPipe: CarbonListFilterPipe
+    private readonly logger: NGXLogger,
+    private readonly translateService: TranslateService,
+    private readonly viewContentService: ViewContentService,
+    private readonly cd: ChangeDetectorRef
   ) {
     this.viewListAs = localStorage.getItem('viewListAs') || 'table';
 
-    this.iconService.registerAll([BorderFull16, List16]);
+    this.iconService.registerAll([SettingsView16]);
   }
+
   public ngOnInit(): void {
     if (this.pagination) {
       this.loadPaginationSize();
@@ -273,7 +262,10 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
           } else {
             //to remove when deprecating viewMode 'tile'
             this.searchModel = searchString ?? '';
-            this._model.data = this.filterPipe.transform(this._fullSource, this.searchModel);
+            this._model.data = this.filterPipe.transform(
+              this._completeDataSource,
+              this.searchModel
+            );
           }
         })
     );
@@ -283,18 +275,31 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     this._subscriptions.unsubscribe();
   }
 
-  public onClickRow(index: number): void {
+  public onSelectAll(select = true): void {
+    this._model.selectAll(select);
+    if (select) {
+      return;
+    }
+    this._model.selectAll(false);
+  }
+
+  public onDeselectRow(event: {model: TableModel; deselectedRowIndex: number}): void {
+    const {deselectedRowIndex} = event;
+    this._model.selectRow(deselectedRowIndex, false);
+  }
+
+  public onSelectRow(event: {model: TableModel; selectedRowIndex: number}): void {
+    const {selectedRowIndex} = event;
+    this._model.selectRow(selectedRowIndex);
+  }
+
+  public onRowClick(index: number): void {
     const item = this.model.data[index][0]['item'];
 
     if (!item) {
       return;
     }
     this.rowClicked.emit(item);
-  }
-
-  public switchView(type: 'table' | 'title'): void {
-    localStorage.setItem('viewListAs', type);
-    this.viewListAs = type;
   }
 
   public onSelectPage(page: number): void {
@@ -310,57 +315,7 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     this.paginationClicked.emit(page);
   }
 
-  public selectAllCheckbox = false;
-  public selectAllCheckboxSomeSelected = false;
-
-  public selectAllChange(select = true): void {
-    this._model.selectAll(select);
-    this.updateSelectState();
-  }
-
-  public onSelectRow(event: {model: TableModel; selectedRowIndex: number}): void {
-    const {selectedRowIndex} = event;
-    this._model.selectRow(selectedRowIndex);
-    this.updateSelectState();
-  }
-
-  public onDeselectRow(event: {model: TableModel; deselectedRowIndex: number}): void {
-    const {deselectedRowIndex} = event;
-    this._model.selectRow(deselectedRowIndex, false);
-    this.updateSelectState();
-  }
-
-  private updateSelectState(): void {
-    const selectedCount: number = this._model.selectedRowsCount();
-    this.selectAllCheckboxSomeSelected =
-      selectedCount > 0 && selectedCount < this._model.data.length;
-
-    this.selectAllCheckbox = selectedCount === this._model.data.length;
-  }
-
-  public get selectAllCheckbox2(): boolean {
-    if (!this.model || this.loading) {
-      return false;
-    }
-
-    return this.model.selectedRowsCount() === this.model.totalDataLength;
-  }
-
-  public get selectAllCheckboxSomeSelected2(): boolean {
-    if (!this.model || this.loading) {
-      return false;
-    }
-
-    const selectedCount = this.model.selectedRowsCount();
-    return selectedCount > 0 && selectedCount < this.model.totalDataLength;
-  }
-
-  public onToolbarCancel(): void {
-    console.log(this.toolbar);
-    this.selectAllChange(false);
-  }
-
-  public handleFieldClick(headerItem: TableHeaderItem & {key: string}): void {
+  public onSort(headerItem: TableHeaderItem & {key: string}): void {
     const {key, sortable} = headerItem;
     if (!sortable) {
       return;
@@ -388,6 +343,91 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     });
   }
 
+  public onToolbarCancel(): void {
+    this.onSelectAll(false);
+  }
+
+  public switchView(type: 'table' | 'tile'): void {
+    localStorage.setItem('viewListAs', type);
+    this.viewListAs = type;
+  }
+
+  private buildPaginationModel(): void {
+    this.paginationModel = {
+      currentPage: this.pagination.page,
+      totalDataLength: +this.pagination.collectionSize,
+      pageLength: this.pagination.size,
+    };
+  }
+
+  private buildHeaderItems(fields: ColumnConfig[]): void {
+    const translationStreams: Observable<string>[] = fields.map((column: ColumnConfig) =>
+      !column.label ? of('') : this.translateService.stream(column.label)
+    );
+
+    this._subscriptions.add(
+      combineLatest(translationStreams)
+        .pipe(
+          switchMap((translationResults: string[]) =>
+            this.sort$.pipe(map((sortState: SortState) => ({translationResults, sortState})))
+          ),
+          map(({translationResults, sortState}) => [
+            ...translationResults.map(
+              (translation: string, index: number) =>
+                new TableHeaderItem({
+                  data: translation,
+                  sortable: !!fields[index].sortable,
+                  className: fields[index].className ?? '',
+                  key: fields[index].key,
+                  sorted: sortState.isSorting && fields[index].key === sortState.state.name,
+                  ascending:
+                    fields[index].key === sortState.state.name &&
+                    sortState.state.direction === 'ASC',
+                  viewType: fields[index].viewType,
+                })
+            ),
+          ])
+        )
+        .subscribe((header: TableHeaderItem[]) => {
+          this._model.header = !this.lastColumnTemplate
+            ? header
+            : [...header, new TableHeaderItem({data: '', key: '', viewType: ViewType.ACTION})];
+        })
+    );
+  }
+
+  private buildTableItems(): TableItem[][] {
+    const itemCount: number = this._items.length;
+    return this._items.map((item: T, index: number) => {
+      const fields = this._fields.map((column: ColumnConfig) => {
+        switch (column.viewType) {
+          case ViewType.ACTION:
+            return new TableItem({
+              data: {actions: column.actions, item},
+              template: this.actionsMenu,
+            });
+          case ViewType.TEMPLATE:
+            return new TableItem({
+              data: {item, index, length: itemCount},
+              template: column.template,
+            });
+          default:
+            return new TableItem({data: this.resolveObject(column, item) ?? '-', item});
+        }
+      });
+
+      return !this.lastColumnTemplate
+        ? fields
+        : [
+            ...fields,
+            new TableItem({
+              data: {item, index, length: itemCount},
+              template: this.lastColumnTemplate,
+            }),
+          ];
+    });
+  }
+
   private loadPaginationSize(): void {
     const entries = localStorage.getItem(
       `${this.paginationIdentifier}${CarbonListComponent.PAGINATION_SIZE}`
@@ -405,12 +445,13 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     }
   }
 
-  private buildPaginationModel(): void {
-    this.paginationModel = {
-      currentPage: this.pagination.page,
-      totalDataLength: +this.pagination.collectionSize,
-      pageLength: this.pagination.size,
-    };
+  private setPaginationSize(numberOfEntries: string): void {
+    localStorage.setItem(
+      `${this.paginationIdentifier}${CarbonListComponent.PAGINATION_SIZE}`,
+      numberOfEntries
+    );
+    this.logger.debug('Pagination set in local storage for this list: ', numberOfEntries);
+    this.paginationSet.emit(numberOfEntries);
   }
 
   private resolveObject(definition: any, obj: any) {
@@ -421,46 +462,5 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
       : definitionKey;
     const resolvedObjValue = _get(obj, key, null);
     return this.viewContentService.get(resolvedObjValue, definition);
-  }
-
-  private getTableItems(): TableItem[][] {
-    const length = this._items.length;
-    return this._items.map((item: T, index: number) => {
-      const fields = this._fields.map((column: ColumnConfig) => {
-        switch (column.viewType) {
-          case ViewType.ACTION:
-            return new TableItem({
-              data: {actions: column.actions, item},
-              template: this.actionsMenu,
-            });
-          case ViewType.TEMPLATE:
-            return new TableItem({
-              data: {item, index, length},
-              template: column.template,
-            });
-          default:
-            return new TableItem({data: this.resolveObject(column, item) ?? '-', item});
-        }
-      });
-
-      return !this.lastColumnTemplate
-        ? fields
-        : [
-            ...fields,
-            new TableItem({
-              data: {item, index, length},
-              template: this.lastColumnTemplate,
-            }),
-          ];
-    });
-  }
-
-  private setPaginationSize(numberOfEntries: string): void {
-    localStorage.setItem(
-      `${this.paginationIdentifier}${CarbonListComponent.PAGINATION_SIZE}`,
-      numberOfEntries
-    );
-    this.logger.debug('Pagination set in local storage for this list: ', numberOfEntries);
-    this.paginationSet.emit(numberOfEntries);
   }
 }

@@ -83,10 +83,10 @@ const DEFAULT_TABLE_CONFIG: CarbonTableConfig = {
 };
 
 const DEFAULT_LIST_TRANSLATIONS: CarbonListTranslations = {
-  select: {single: 'interface.table.singleSelect', multiple: 'interface.table.multipleSelect'},
+  select: {single: 'interface.list.singleSelect', multiple: 'interface.list.multipleSelect'},
   pagination: {
-    itemsPerPage: 'interface.table.itemsPerPage',
-    totalItems: 'interface.table.totalItems',
+    itemsPerPage: 'interface.list.itemsPerPage',
+    totalItems: 'interface.list.totalItems',
   },
 };
 

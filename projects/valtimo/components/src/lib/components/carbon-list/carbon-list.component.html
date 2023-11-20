@@ -42,22 +42,20 @@
         [formControl]="searchFormControl"
       ></cds-table-toolbar-search>
 
-      <ng-container *ngIf="!loading">
-        <button
-          [cdsButton]="viewListAs === 'table' ? 'primary' : 'tertiary'"
-          [iconOnly]="true"
-          (click)="switchView('table')"
-        >
-          <svg cdsIcon="list" size="16" class="cds--btn__icon"></svg>
-        </button>
+      <ng-container *ngIf="!loading && !!viewMode">
+        <cds-overflow-menu [customTrigger]="viewModeTrigger">
+          <cds-overflow-menu-option (selected)="switchView('table')">{{
+            'interface.list.viewMode.table' | translate
+          }}</cds-overflow-menu-option>
 
-        <button
-          [cdsButton]="viewListAs === 'tile' ? 'primary' : 'tertiary'"
-          [iconOnly]="true"
-          (click)="switchView('tile')"
-        >
-          <svg cdsIcon="border--full" size="16" class="cds--btn__icon"></svg>
-        </button>
+          <cds-overflow-menu-option (selected)="switchView('tile')">{{
+            'interface.list.viewMode.tile' | translate
+          }}</cds-overflow-menu-option>
+        </cds-overflow-menu>
+
+        <ng-template #viewModeTrigger>
+          <svg cdsIcon="settings--view" size="16"></svg>
+        </ng-template>
       </ng-container>
 
       <ng-content select="[carbonToolbarContent]"> </ng-content>
@@ -77,166 +75,28 @@
       </cds-overflow-menu-option>
     </cds-overflow-menu>
   </ng-template>
-  <!--
-  <!-- <div *ngIf="(!!obs.items.length && !!model.header.length) || header">
-    <div
-      class="d-flex align-items-center search-holder bg-light"
-      [ngClass]="{'pb-4 pt-4': !header}"
-      *ngIf="isSearchable || viewMode || header"
-    >
-      <div class="align-self-start">
-        <ng-content select="[header]"></ng-content>
-      </div>
 
-      <div class="ml-auto row">
-        <input
-          *ngIf="isSearchable"
-          class="form-control col-sm-8"
-          type="text"
-          placeholder="{{ 'list.search' | translate }}"
-          #searchBox
-        />
-
-        <div
-          class="switch-view-holder btn-group col-sm-4 mt-1 mt-sm-0"
-          role="group"
-          *ngIf="viewMode"
-        >
-          <button
-            class="btn"
-            [ngClass]="viewListAs === 'table' ? 'btn-primary' : 'btn-default'"
-            (click)="switchView('table')"
-          >
-            <i class="icon mdi mdi-view-headline view-icon"></i>
-          </button>
-          <button
-            class="btn"
-            [ngClass]="viewListAs === 'tile' ? 'btn-primary' : 'btn-default'"
-            (click)="switchView('tile')"
-          >
-            <i class="icon mdi mdi-view-module view-icon"></i>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div> -->
   <table *ngIf="(!viewMode || viewListAs === 'table') && !!obs.sort" cdsTable>
     <thead
       cdsTableHead
       [model]="model"
       [showSelectionColumn]="showSelectionColumn"
-      [selectAllCheckbox]="selectAllCheckbox2"
-      [selectAllCheckboxSomeSelected]="selectAllCheckboxSomeSelected2"
-      (sort)="handleFieldClick(model.header[$event])"
-      (selectAll)="selectAllChange()"
-      (deselectAll)="selectAllChange(false)"
-    >
-      <!-- FRESH COMMENT -->
-      <!-- <tr> -->
-
-      <!-- (click)="handleFieldClick(field.key, field.sortable)" -->
-      <!-- [ngClass]="{
-              sortable: field.sortable,
-              'is-being-sorted': field.key === obs.sort.state.name && obs.sort.isSorting,
-              ascending: obs.sort.state.direction === 'ASC'
-            }" -->
-
-      <!-- FRESH COMMENT -->
-      <!-- <th
-          *ngFor="let column of model.header"
-          cdsTableHeadCell
-          scope="col"
-          [ascending]="true"
-          [column]="column"
-          [sortable]="column.sortable"
-          (sort)="handleFieldClick(field.key, field.sortable)"
-        ></th>
-        <th
-          *ngIf="lastColumnTemplate"
-          scope="col"
-          cdsTableHeadCell
-          [column]="lastColumnHeaderItem"
-        ></th> -->
-      <!-- <th *ngFor="let action of actions">
-              {{ action.columnName }}
-            </th> -->
-
-      <!-- FRESH COMMENT -->
-      <!-- </tr> -->
-    </thead>
+      [selectAllCheckbox]="selectAllCheckbox"
+      [selectAllCheckboxSomeSelected]="selectAllCheckboxSomeSelected"
+      (sort)="onSort(model.header[$event])"
+      (selectAll)="onSelectAll()"
+      (deselectAll)="onSelectAll(false)"
+    ></thead>
 
     <tbody
       *ngIf="model.totalDataLength; else noResults"
       cdsTableBody
       [model]="model"
       [showSelectionColumn]="showSelectionColumn"
-      (rowClick)="onClickRow($event)"
+      (rowClick)="onRowClick($event)"
       (selectRow)="onSelectRow($event)"
       (deselectRow)="onDeselectRow($event)"
-    >
-      <!-- [ngClass]="{'click-able': this.rowClicked.observers.length > 0}" -->
-
-      <!-- FRESH COMMENT -->
-
-      <!-- <tr
-        *ngFor="let itemRow of model.data | listFilter: searchModel; let index = index"
-        cdsTableRow
-        [row]="itemRow"
-        (click)="onClickRow(items[index])"
-      > -->
-      <!-- DON'T FORGET CLASS_NAME -->
-      <!-- FRESH COMMENT -->
-      <!-- <td *ngFor="let item of itemRow" cdsTableData [item]="item"></td> -->
-
-      <!-- <ng-container
-              *ngIf="
-                listItemField.type === '' && {
-                  valueTranslationKey: 'viewTypeConverter.' + listItemField.value,
-                  valueTranslation: 'viewTypeConverter.' + listItemField.value | translate
-                } as vars
-              "
-            >
-              {{
-                listItemField.value
-                  ? vars.valueTranslation !== vars.valueTranslationKey
-                    ? vars.valueTranslation
-                    : listItemField.value
-                  : '-'
-              }}
-            </ng-container>
-
-            <ng-container
-              *ngIf="listItemField.type === 'dropdownActions'"
-              [ngTemplateOutlet]="dropdownActions"
-              [ngTemplateOutletContext]="{listItemField: listItemField, item: item}"
-            ></ng-container> -->
-      <!-- <td class="align-top" *ngFor="let action of actions">
-              <i
-                class="action-icon"
-                style="cursor: pointer"
-                [ngClass]="action.iconClass"
-                (click)="action.callback(item, $event)"
-              ></i>
-            </td> -->
-
-      <!-- FRESH COMMENT -->
-      <!-- <td *ngIf="lastColumnTemplate">
-          <ng-container
-            *ngTemplateOutlet="
-              lastColumnTemplate;
-              context: {index, length: model.data.length, item: items}
-            "
-          ></ng-container>
-        </td>
-      </tr> -->
-
-      <!-- NO_RESULTS GOES HERE -->
-      <!-- <tr>
-            <td *ngIf="(items | listFilter: searchModel).length === 0" [colSpan]="fields.length">
-              {{ 'list.noMatchingItems' | translate }}<i>"{{ searchModel }}"</i>
-            </td>
-          </tr> -->
-    </tbody>
+    ></tbody>
 
     <ng-template #noResults>
       <tbody cdsTableBody>
@@ -244,6 +104,7 @@
           <td [attr.colspan]="numberOfColumns" class="valtimo-carbon-list__no-results">
             <ng-content></ng-content>
           </td>
+
           <td [attr.colspan]="numberOfColumns">
             {{ 'list.noResults' | translate }}
           </td>
@@ -252,7 +113,11 @@
     </ng-template>
   </table>
 
-  <div class="container-fluid" *ngIf="viewMode && viewListAs === 'tile'">
+  <div
+    *ngIf="viewMode && viewListAs === 'tile'"
+    class="container-fluid"
+    [attr.data-carbon-theme]="theme"
+  >
     <div class="row p-2">
       <div
         class="col-12 col-sm-6 col-xl-4 p-2"
@@ -261,9 +126,11 @@
       >
         <div class="click-able tile-holder p-4">
           <dl class="row mb-0" *ngFor="let column of model.header; let index = index">
-            <dt class="col-12 col-md-5 text-xl-right">{{ column.data }}</dt>
+            <ng-container *ngIf="![ViewType.ACTION, ViewType.TEMPLATE].includes(column.viewType)">
+              <dt class="col-12 col-md-5 text-xl-right">{{ column.data }}</dt>
 
-            <dd class="col-12 col-md-7">{{ item[index].data }}</dd>
+              <dd class="col-12 col-md-7">{{ item[index].data }}</dd>
+            </ng-container>
           </dl>
         </div>
       </div>
@@ -278,54 +145,13 @@
     </div>
   </div>
 
-  <!-- PAGINATION -->
-
   <cds-pagination
-    *ngIf="paginationModel && model.data.length"
+    *ngIf="paginationModel && items.length"
     [itemsPerPageOptions]="paginatorConfig.itemsPerPageOptions"
     [model]="paginationModel"
     [showPageInput]="paginatorConfig.showPageInput"
+    [skeleton]="loading"
     [translations]="paginationTranslations$ | async"
     (selectPage)="onSelectPage($event)"
   ></cds-pagination>
-  <!-- [skeleton]="loading" -->
-
-  <!-- SOME OTHER NO SHIT THING -->
-
-  <!-- <div id="no-results" class="p-5" *ngIf="items?.length === 0">
-    {{ 'list.noResults' | translate }}
-  </div>
-
-  <div id="no-field-definitions" class="p-5" *ngIf="items?.length > 0 && fields?.length === 0">
-    {{ 'list.noFieldDefinitions' | translate }}
-  </div> -->
 </cds-table-container>
-
-<!-- DROPDOWN ACTIONS -->
-
-<!-- <ng-template #dropdownActions let-listItemField="listItemField" let-item="item">
-  <div class="dropdown" *ngIf="listItemField?.value.length > 0">
-    <a
-      style="cursor: pointer"
-      class="dropdown-toggle d-block"
-      id="dropdownMenu"
-      data-toggle="dropdown"
-      aria-haspopup="true"
-      aria-expanded="false"
-    >
-      <i class="action-icon icon mdi mdi-dots-vertical"></i>
-    </a>
-    <div class="dropdown-menu" aria-labelledby="dropdownMenu">
-      <a
-        (click)="action.callback(item, $event)"
-        class="dropdown-item p-2"
-        *ngFor="let action of listItemField.value"
-      >
-        <ng-container *ngIf="action.iconClass !== null">
-          <i [ngClass]="action.iconClass"></i>
-        </ng-container>
-        {{ action?.label || '-' }}
-      </a>
-    </div>
-  </div>
-</ng-template> -->

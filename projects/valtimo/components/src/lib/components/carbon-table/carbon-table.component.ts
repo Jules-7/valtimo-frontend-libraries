@@ -147,10 +147,10 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
   }
 
   private readonly _defaultTranslations: CarbonListTranslations = {
-    select: {single: 'interface.table.singleSelect', multiple: 'interface.table.multipleSelect'},
+    select: {single: 'interface.list.singleSelect', multiple: 'interface.list.multipleSelect'},
     pagination: {
-      itemsPerPage: 'interface.table.itemsPerPage',
-      totalItems: 'interface.table.totalItems',
+      itemsPerPage: 'interface.list.itemsPerPage',
+      totalItems: 'interface.list.totalItems',
     },
   };
   private _tableTranslations$: BehaviorSubject<CarbonListTranslations> = new BehaviorSubject(
@@ -202,8 +202,8 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
         combineLatest([
           this.translateService.stream(translations.pagination.itemsPerPage),
           this.translateService.stream(translations.pagination.totalItems),
-          this.translateService.stream('interface.table.ofLastPage'),
-          this.translateService.stream('interface.table.ofLastPages'),
+          this.translateService.stream('interface.list.ofLastPage'),
+          this.translateService.stream('interface.list.ofLastPages'),
         ])
       ),
       map(([ITEMS_PER_PAGE, TOTAL_ITEMS, OF_LAST_PAGE, OF_LAST_PAGES]) => ({

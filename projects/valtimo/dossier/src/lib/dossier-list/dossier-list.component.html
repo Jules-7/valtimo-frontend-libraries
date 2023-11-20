@@ -92,6 +92,12 @@
       <ng-container *ngTemplateOutlet="dossierListActions"></ng-container>
     </div>
 
+    <valtimo-no-results
+      [action]="dossierListActions"
+      description="{{ 'dossier.noResults.description' | translate }}"
+      title="{{ 'dossier.noResults.title' | translate }}"
+    ></valtimo-no-results>
+
     <div tabs *ngIf="canHaveAssignee">
       <ng-container *ngTemplateOutlet="tabs"></ng-container>
     </div>

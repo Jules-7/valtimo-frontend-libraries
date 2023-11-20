@@ -391,7 +391,6 @@ export class DossierListComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log(this.carbonList.model.selectedRowsCount());
     if (this.carbonList.model.selectedRowsCount()) {
       this.showChangeTabModal$.next(true);
       this.tabChange$.next(tab);

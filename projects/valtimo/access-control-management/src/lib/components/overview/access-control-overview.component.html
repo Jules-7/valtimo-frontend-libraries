@@ -19,7 +19,7 @@
   [fields]="fields"
   [loading]="loading$ | async"
   [showSelectionColumn]="true"
-  (rowClick)="onRowClick($event)"
+  (rowClicked)="onRowClick($event)"
 >
   <ng-container carbonTableTitle> {{ 'accessControl.roles.title' | translate }} </ng-container>
 
