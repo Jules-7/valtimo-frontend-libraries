@@ -14,31 +14,30 @@
  * limitations under the License.
  */
 import {
-  AfterViewInit,
   Component,
-  ElementRef,
   EventEmitter,
   HostBinding,
   Input,
-  OnChanges,
   OnDestroy,
   OnInit,
   Output,
-  SimpleChanges,
   TemplateRef,
   ViewChild,
 } from '@angular/core';
 import {FormControl} from '@angular/forms';
+import {BorderFull16, List16} from '@carbon/icons';
 import {TranslateService} from '@ngx-translate/core';
 import {SortState} from '@valtimo/document';
 import {
   IconService,
+  OverflowMenu,
   PaginationModel,
   PaginationTranslations,
   Table,
   TableHeaderItem,
   TableItem,
   TableModel,
+  TableToolbar,
 } from 'carbon-components-angular';
 import {get as _get} from 'lodash';
 import {NGXLogger} from 'ngx-logger';
@@ -53,14 +52,14 @@ import {
   Subscription,
   switchMap,
   take,
-  tap,
 } from 'rxjs';
-import {BorderFull16, List16} from '@carbon/icons';
+
 import {
   CarbonPaginatorConfig,
-  CarbonTableBatchText,
-  CarbonTableTranslations,
+  CarbonListBatchText,
+  CarbonListTranslations,
   ColumnConfig,
+  DEFAULT_LIST_TRANSLATIONS,
   DEFAULT_PAGINATION,
   DEFAULT_PAGINATOR_CONFIG,
   Pagination,
@@ -75,9 +74,10 @@ import {CarbonListFilterPipe} from './CarbonListFilterPipe.directive';
   styleUrls: ['./carbon-list.component.scss'],
   providers: [CarbonListFilterPipe],
 })
-export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit, OnDestroy {
+export class CarbonListComponent<T> implements OnInit, OnDestroy {
   @HostBinding('attr.data-carbon-theme') public theme = 'g10';
-  @ViewChild('toolbar') public toolbar;
+  @ViewChild('actionsMenu') actionsMenu: TemplateRef<OverflowMenu>;
+  @ViewChild(TableToolbar) toolbar;
 
   private static PAGINATION_SIZE = 'PaginationSize';
 
@@ -105,7 +105,7 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
   @Input() set fields(value: ColumnConfig[]) {
     this._fields = value;
     const translationStreams: Observable<string>[] = value.map((column: ColumnConfig) =>
-      this.translateService.stream(column.label)
+      !column.label ? of('') : this.translateService.stream(column.label)
     );
 
     this._subscriptions.add(
@@ -134,7 +134,6 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
           this._model.header = !this.lastColumnTemplate
             ? header
             : [...header, new TableHeaderItem({data: '', key: ''})];
-          console.log(this._model.header);
         })
     );
 
@@ -143,26 +142,18 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     }
 
     this._model.data = this.getTableItems();
-    // this.items$.next(this.getTableItems());
   }
 
-  private readonly _defaultTranslations: CarbonTableTranslations = {
-    select: {single: 'interface.table.singleSelect', multiple: 'interface.table.multipleSelect'},
-    pagination: {
-      itemsPerPage: 'interface.table.itemsPerPage',
-      totalItems: 'interface.table.totalItems',
-    },
-  };
-  private _tableTranslations$: BehaviorSubject<CarbonTableTranslations> = new BehaviorSubject(
-    this._defaultTranslations
+  private _tableTranslations$: BehaviorSubject<CarbonListTranslations> = new BehaviorSubject(
+    DEFAULT_LIST_TRANSLATIONS
   );
-  @Input() set tableTranslations(value: Partial<CarbonTableTranslations>) {
-    this._tableTranslations$.next({...this._defaultTranslations, ...value});
+  @Input() set tableTranslations(value: Partial<CarbonListTranslations>) {
+    this._tableTranslations$.next({...DEFAULT_LIST_TRANSLATIONS, ...value});
   }
 
   public paginationTranslations$: Observable<Partial<PaginationTranslations>> =
     this._tableTranslations$.pipe(
-      switchMap((translations: CarbonTableTranslations) =>
+      switchMap((translations: CarbonListTranslations) =>
         combineLatest([
           this.translateService.stream(translations.pagination.itemsPerPage),
           this.translateService.stream(translations.pagination.totalItems),
@@ -178,8 +169,8 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
       }))
     );
 
-  public batchText$: Observable<CarbonTableBatchText> = this._tableTranslations$.pipe(
-    switchMap((translations: CarbonTableTranslations) =>
+  public batchText$: Observable<CarbonListBatchText> = this._tableTranslations$.pipe(
+    switchMap((translations: CarbonListTranslations) =>
       combineLatest([
         this.translateService.stream(translations.select.single),
         this.translateService.stream(translations.select.multiple),
@@ -288,19 +279,6 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     );
   }
 
-  public ngOnChanges(changes: SimpleChanges): void {
-    if (changes?.initialSortState?.currentValue) {
-      this.sort$.next(changes?.initialSortState?.currentValue);
-    }
-  }
-
-  public ngAfterViewInit(): void {
-    // if (!this.lastColumnTemplate || !this._fields) {
-    //   return;
-    // }
-    // this.setLastColumnTemplate();
-  }
-
   public ngOnDestroy(): void {
     this._subscriptions.unsubscribe();
   }
@@ -318,10 +296,6 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     localStorage.setItem('viewListAs', type);
     this.viewListAs = type;
   }
-
-  // public getTotalPageCount() {
-  //   return Math.ceil(this.pagination.collectionSize / this.pagination.size);
-  // }
 
   public onSelectPage(page: number): void {
     if (!this.paginationModel.pageLength) {
@@ -364,7 +338,25 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     this.selectAllCheckbox = selectedCount === this._model.data.length;
   }
 
+  public get selectAllCheckbox2(): boolean {
+    if (!this.model || this.loading) {
+      return false;
+    }
+
+    return this.model.selectedRowsCount() === this.model.totalDataLength;
+  }
+
+  public get selectAllCheckboxSomeSelected2(): boolean {
+    if (!this.model || this.loading) {
+      return false;
+    }
+
+    const selectedCount = this.model.selectedRowsCount();
+    return selectedCount > 0 && selectedCount < this.model.totalDataLength;
+  }
+
   public onToolbarCancel(): void {
+    console.log(this.toolbar);
     this.selectAllChange(false);
   }
 
@@ -434,13 +426,13 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
   private getTableItems(): TableItem[][] {
     const length = this._items.length;
     return this._items.map((item: T, index: number) => {
-      const fields = this._fields.map((column: ColumnConfig, columnIndex: number) => {
+      const fields = this._fields.map((column: ColumnConfig) => {
         switch (column.viewType) {
-          // case ViewType.ACTION:
-          //   return new TableItem({
-          //     data: {actions: column.actions, item},
-          //     template: this.actionsMenu,
-          //   });
+          case ViewType.ACTION:
+            return new TableItem({
+              data: {actions: column.actions, item},
+              template: this.actionsMenu,
+            });
           case ViewType.TEMPLATE:
             return new TableItem({
               data: {item, index, length},
@@ -450,12 +442,6 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
             return new TableItem({data: this.resolveObject(column, item) ?? '-', item});
         }
       });
-      // if (columnIndex === this._fields.length - 1 && !!this.lastColumnTemplate) {
-      //   return new TableItem({
-      //     data: {item, index},
-      //     template: this.lastColumnTemplate,
-      //   });
-      // }
 
       return !this.lastColumnTemplate
         ? fields
@@ -469,29 +455,12 @@ export class CarbonListComponent<T> implements OnChanges, OnInit, AfterViewInit,
     });
   }
 
-  // private transformListItemsMatchFields() {
-  //   if (this.items && this.fields) {
-  //     this.items.forEach(item => {
-  //       item.listItemFields = this.fields.map(field => ({
-  //         key: field.key,
-  //         label: field.label,
-  //         type: field.type || '',
-  //         value: this.resolveObject(field, item),
-  //       }));
-  //     });
-  //   }
-  // }
-
   private setPaginationSize(numberOfEntries: string): void {
     localStorage.setItem(
       `${this.paginationIdentifier}${CarbonListComponent.PAGINATION_SIZE}`,
       numberOfEntries
     );
-    // this.pagination = {size: +numberOfEntries};
-    // this.pagination.size = +numberOfEntries;
     this.logger.debug('Pagination set in local storage for this list: ', numberOfEntries);
     this.paginationSet.emit(numberOfEntries);
   }
-
-  private templateSet = false;
 }

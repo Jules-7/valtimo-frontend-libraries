@@ -14,11 +14,11 @@
   ~ limitations under the License.
   -->
 
-<valtimo-carbon-table
-  [data]="roles$ | async"
+<valtimo-carbon-list
+  [items]="roles$ | async"
   [fields]="fields"
   [loading]="loading$ | async"
-  [tableConfig]="tableConfig"
+  [showSelectionColumn]="true"
   (rowClick)="onRowClick($event)"
 >
   <ng-container carbonTableTitle> {{ 'accessControl.roles.title' | translate }} </ng-container>
@@ -46,7 +46,7 @@
     description="{{ 'accessControl.roles.noResults.description' | translate }}"
     title="{{ 'accessControl.roles.noResults.title' | translate }}"
   ></valtimo-no-results>
-</valtimo-carbon-table>
+</valtimo-carbon-list>
 
 <valtimo-role-metadata-modal
   [open]="showAddModal$ | async"

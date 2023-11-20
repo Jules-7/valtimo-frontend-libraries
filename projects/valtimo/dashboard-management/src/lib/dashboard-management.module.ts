@@ -18,6 +18,7 @@ import {NgModule} from '@angular/core';
 import {ReactiveFormsModule} from '@angular/forms';
 import {TranslateModule} from '@ngx-translate/core';
 import {
+  CarbonListModule,
   CarbonTableModule,
   ConfirmationModalModule,
   ListModule,
@@ -65,6 +66,7 @@ import {WidgetConfigurationContainerComponent} from './components/widget-configu
     NotificationModule,
     IconModule,
     WidgetTranslatePipeModule,
+    CarbonListModule
   ],
   exports: [],
 })

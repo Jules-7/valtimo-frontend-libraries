@@ -55,9 +55,9 @@ import {
   ActionItem,
   CarbonPaginationSelection,
   CarbonPaginatorConfig,
-  CarbonTableBatchText,
+  CarbonListBatchText,
   CarbonTableConfig,
-  CarbonTableTranslations,
+  CarbonListTranslations,
   ColumnConfig,
   DEFAULT_PAGINATOR_CONFIG,
   DEFAULT_TABLE_CONFIG,
@@ -146,17 +146,17 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
     return this._loading;
   }
 
-  private readonly _defaultTranslations: CarbonTableTranslations = {
+  private readonly _defaultTranslations: CarbonListTranslations = {
     select: {single: 'interface.table.singleSelect', multiple: 'interface.table.multipleSelect'},
     pagination: {
       itemsPerPage: 'interface.table.itemsPerPage',
       totalItems: 'interface.table.totalItems',
     },
   };
-  private _tableTranslations$: BehaviorSubject<CarbonTableTranslations> = new BehaviorSubject(
+  private _tableTranslations$: BehaviorSubject<CarbonListTranslations> = new BehaviorSubject(
     this._defaultTranslations
   );
-  @Input() set tableTranslations(value: Partial<CarbonTableTranslations>) {
+  @Input() set tableTranslations(value: Partial<CarbonListTranslations>) {
     this._tableTranslations$.next({...this._defaultTranslations, ...value});
   }
 
@@ -181,8 +181,8 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
   @Output() search: EventEmitter<string | null> = new EventEmitter();
   @Output() sortChange: EventEmitter<SortState> = new EventEmitter();
 
-  public batchText$: Observable<CarbonTableBatchText> = this._tableTranslations$.pipe(
-    switchMap((translations: CarbonTableTranslations) =>
+  public batchText$: Observable<CarbonListBatchText> = this._tableTranslations$.pipe(
+    switchMap((translations: CarbonListTranslations) =>
       combineLatest([
         this.translateService.stream(translations.select.single),
         this.translateService.stream(translations.select.multiple),
@@ -198,7 +198,7 @@ export class CarbonTableComponent<T> implements AfterViewInit, OnDestroy {
 
   public paginationTranslations$: Observable<Partial<PaginationTranslations>> =
     this._tableTranslations$.pipe(
-      switchMap((translations: CarbonTableTranslations) =>
+      switchMap((translations: CarbonListTranslations) =>
         combineLatest([
           this.translateService.stream(translations.pagination.itemsPerPage),
           this.translateService.stream(translations.pagination.totalItems),

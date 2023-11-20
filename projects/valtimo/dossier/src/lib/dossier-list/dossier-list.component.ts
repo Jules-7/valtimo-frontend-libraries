@@ -20,7 +20,7 @@ import {
   BreadcrumbService,
   CarbonListComponent,
   CarbonPaginationSelection,
-  CarbonTableTranslations,
+  CarbonListTranslations,
   ListField,
   PageTitleService,
   Pagination,
@@ -102,7 +102,7 @@ export class DossierListComponent implements OnInit, OnDestroy {
     DossierListTab.OPEN,
   ];
 
-  public readonly tableTranslations: CarbonTableTranslations = {
+  public readonly tableTranslations: CarbonListTranslations = {
     select: {
       single: 'dossier.select.single',
       multiple: 'dossier.select.multiple',

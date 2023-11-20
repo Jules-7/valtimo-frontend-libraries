@@ -17,12 +17,12 @@
 import {ChangeDetectionStrategy, Component, Input, TemplateRef} from '@angular/core';
 
 @Component({
-  selector: 'valtimo-list-no-results',
-  templateUrl: './carbon-list-no-results.component.html',
-  styleUrls: ['./carbon-list-no-results.component.scss'],
+  selector: 'valtimo-no-results',
+  templateUrl: './carbon-no-results.component.html',
+  styleUrls: ['./carbon-no-results.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CarbonListNoResultsComponent {
+export class CarbonNoResultsComponent {
   @Input() action: TemplateRef<any>;
   @Input() description: string;
   @Input() illustration = 'valtimo-layout/img/no-results.svg';

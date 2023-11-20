@@ -22,17 +22,18 @@ import {TranslateModule} from '@ngx-translate/core';
 import {CardModule} from '../card/card.module';
 import {CarbonListComponent} from './carbon-list.component';
 import {CarbonListFilterPipe} from './CarbonListFilterPipe.directive';
-import {CarbonListNoResultsComponent} from './no-results/carbon-list-no-results.component';
+import {CarbonNoResultsComponent} from './no-results/carbon-no-results.component';
 import {
   ButtonModule,
   ContentSwitcherModule,
+  DialogModule,
   IconModule,
   PaginationModule,
   TableModule,
 } from 'carbon-components-angular';
 
 @NgModule({
-  declarations: [CarbonListComponent, CarbonListFilterPipe, CarbonListNoResultsComponent],
+  declarations: [CarbonListComponent, CarbonListFilterPipe, CarbonNoResultsComponent],
   imports: [
     CardModule,
     CommonModule,
@@ -45,7 +46,8 @@ import {
     ContentSwitcherModule,
     IconModule,
     ButtonModule,
+    DialogModule,
   ],
-  exports: [CarbonListComponent, CarbonListFilterPipe, CarbonListNoResultsComponent],
+  exports: [CarbonListComponent, CarbonListFilterPipe, CarbonNoResultsComponent],
 })
 export class CarbonListModule {}

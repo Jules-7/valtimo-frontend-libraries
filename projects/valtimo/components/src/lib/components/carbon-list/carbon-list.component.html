@@ -63,6 +63,20 @@
       <ng-content select="[carbonToolbarContent]"> </ng-content>
     </cds-table-toolbar-content>
   </cds-table-toolbar>
+
+  <ng-template #actionsMenu let-data="data">
+    <cds-overflow-menu (click)="$event.stopPropagation()">
+      <cds-overflow-menu-option
+        *ngFor="let action of data.actions"
+        [type]="action.type"
+        (selected)="action.callback(data.item)"
+      >
+        <i *ngIf="!!action.iconClass" [ngClass]="action.iconClass"></i>
+
+        {{ action.label | translate }}
+      </cds-overflow-menu-option>
+    </cds-overflow-menu>
+  </ng-template>
   <!--
   <!-- <div *ngIf="(!!obs.items.length && !!model.header.length) || header">
     <div
@@ -111,8 +125,8 @@
       cdsTableHead
       [model]="model"
       [showSelectionColumn]="showSelectionColumn"
-      [selectAllCheckbox]="selectAllCheckbox"
-      [selectAllCheckboxSomeSelected]="selectAllCheckboxSomeSelected"
+      [selectAllCheckbox]="selectAllCheckbox2"
+      [selectAllCheckboxSomeSelected]="selectAllCheckboxSomeSelected2"
       (sort)="handleFieldClick(model.header[$event])"
       (selectAll)="selectAllChange()"
       (deselectAll)="selectAllChange(false)"
@@ -152,7 +166,7 @@
     </thead>
 
     <tbody
-      *ngIf="model.data.length; else noResults"
+      *ngIf="model.totalDataLength; else noResults"
       cdsTableBody
       [model]="model"
       [showSelectionColumn]="showSelectionColumn"

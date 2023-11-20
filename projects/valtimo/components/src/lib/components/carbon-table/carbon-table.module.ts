@@ -19,10 +19,9 @@ import {ReactiveFormsModule} from '@angular/forms';
 import {TranslateModule} from '@ngx-translate/core';
 import {ButtonModule, DialogModule, PaginationModule, TableModule} from 'carbon-components-angular';
 import {CarbonTableComponent} from './carbon-table.component';
-import {CarbonNoResultsComponent} from './no-results/carbon-no-results.component';
 
 @NgModule({
-  declarations: [CarbonNoResultsComponent, CarbonTableComponent],
+  declarations: [CarbonTableComponent],
   imports: [
     CommonModule,
     DialogModule,
@@ -32,6 +31,6 @@ import {CarbonNoResultsComponent} from './no-results/carbon-no-results.component
     ButtonModule,
     ReactiveFormsModule,
   ],
-  exports: [CarbonNoResultsComponent, CarbonTableComponent],
+  exports: [CarbonTableComponent],
 })
 export class CarbonTableModule {}
