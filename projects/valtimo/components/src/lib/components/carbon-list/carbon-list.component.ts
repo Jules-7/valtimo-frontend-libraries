@@ -38,7 +38,6 @@ import {
   TableHeaderItem,
   TableItem,
   TableModel,
-  TableToolbar,
 } from 'carbon-components-angular';
 import {get as _get} from 'lodash';
 import {NGXLogger} from 'ngx-logger';
@@ -78,6 +77,7 @@ import {CarbonListFilterPipe} from './CarbonListFilterPipe.directive';
 export class CarbonListComponent<T> implements OnInit, OnDestroy {
   @HostBinding('attr.data-carbon-theme') theme = 'g10';
   @ViewChild('actionsMenu') actionsMenu: TemplateRef<OverflowMenu>;
+  @ViewChild('actionItem') actionItem: TemplateRef<any>;
 
   private _completeDataSource: TableItem[][];
   private _items: T[];
@@ -129,14 +129,17 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     return this._pagination;
   }
 
+  //To be deprecated
   @Input() actions: any[] = [];
   @Input() header: boolean;
   @Input() initialSortState: SortState;
   @Input() isSearchable: boolean;
-  @Input() lastColumnTemplate?: TemplateRef<any>;
+  //To be deprecated
+  @Input() lastColumnTemplate: TemplateRef<any>;
   @Input() loading = false;
-  @Input() paginationIdentifier?: string;
+  @Input() paginationIdentifier: string;
   @Input() showSelectionColumn: boolean;
+  //To be deprecated
   @Input() viewMode: boolean;
 
   @Output() rowClicked = new EventEmitter<any>();
@@ -196,7 +199,10 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
 
   public get numberOfColumns(): number {
     return (
-      this._fields?.length + (this.lastColumnTemplate ? 1 : 0) + (this.showSelectionColumn ? 1 : 0)
+      this._fields?.length +
+      (this.lastColumnTemplate ? 1 : 0) +
+      (this.showSelectionColumn ? 1 : 0) +
+      this.actions?.length
     );
   }
 
@@ -389,9 +395,32 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
           ])
         )
         .subscribe((header: TableHeaderItem[]) => {
+          if (!!this.actions.length) {
+            header = [
+              ...header,
+              ...this.actions.map(
+                action =>
+                  new TableHeaderItem({
+                    data: action.columnName,
+                    key: action.columnName,
+                    ViewType: ViewType.TEMPLATE,
+                    sorable: false,
+                  })
+              ),
+            ];
+          }
+
           this._model.header = !this.lastColumnTemplate
             ? header
-            : [...header, new TableHeaderItem({data: '', key: '', viewType: ViewType.ACTION})];
+            : [
+                ...header,
+                new TableHeaderItem({
+                  data: '',
+                  key: '',
+                  viewType: ViewType.ACTION,
+                  sortable: false,
+                }),
+              ];
         })
     );
   }
@@ -416,6 +445,18 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
         }
       });
 
+      if (!!this.actions) {
+        fields.push(
+          ...this.actions.map(
+            action =>
+              new TableItem({
+                data: {item, callback: action.callback, iconClass: action.iconClass},
+                template: this.actionItem,
+              })
+          )
+        );
+      }
+
       return !this.lastColumnTemplate
         ? fields
         : [
@@ -434,7 +475,6 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     );
     if (entries !== null) {
       this.pagination = {size: +entries};
-      // this.pagination.size = +entries;
       this.paginationSet.emit(+entries);
       this.logger.debug('Pagination loaded from local storage for this list. Current: ', entries);
     } else {

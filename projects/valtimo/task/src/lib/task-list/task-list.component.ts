@@ -132,10 +132,8 @@ export class TaskListComponent implements OnDestroy {
     }
 
     this.taskService.queryTasks(params).subscribe((results: any) => {
-      // this.tasks[type].pagination.collectionSize = results.headers.get('x-total-count');
       this.tasks[type].pagination = {
         ...this.tasks[type].pagination,
-        // collectionSize: 4,
         collectionSize: results.headers.get('x-total-count'),
       };
       this.tasks[type].tasks = results.body as Array<Task>;
