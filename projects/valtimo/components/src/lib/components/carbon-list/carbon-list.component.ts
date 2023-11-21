@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import {
-  ChangeDetectorRef,
+  ChangeDetectionStrategy,
   Component,
   EventEmitter,
   HostBinding,
@@ -72,6 +72,7 @@ import {CarbonListFilterPipe} from './CarbonListFilterPipe.directive';
   selector: 'valtimo-carbon-list',
   templateUrl: './carbon-list.component.html',
   styleUrls: ['./carbon-list.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [CarbonListFilterPipe],
 })
 export class CarbonListComponent<T> implements OnInit, OnDestroy {
@@ -88,8 +89,8 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
       return;
     }
 
-    this._model.data = this.buildTableItems();
-    this._completeDataSource = this._model.data;
+    this.model.data = this.buildTableItems();
+    this._completeDataSource = this.model.data;
   }
   public get items(): T[] {
     return this._items;
@@ -105,7 +106,7 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
       return;
     }
 
-    this._model.data = this.buildTableItems();
+    this.model.data = this.buildTableItems();
   }
 
   private _tableTranslations$: BehaviorSubject<CarbonListTranslations> = new BehaviorSubject(
@@ -129,16 +130,26 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     return this._pagination;
   }
 
+  private _loading = false;
+  @Input() public set loading(value: boolean) {
+    this._loading = value;
+    this.model = value ? Table.skeletonModel(5, 5) : new TableModel();
+  }
+  public get loading(): boolean {
+    return this._loading;
+  }
+
   //To be deprecated
   @Input() actions: any[] = [];
   @Input() header: boolean;
   @Input() initialSortState: SortState;
-  @Input() isSearchable: boolean;
+  @Input() isSearchable = false;
+  @Input() enableSingleSelection = false;
   //To be deprecated
   @Input() lastColumnTemplate: TemplateRef<any>;
-  @Input() loading = false;
   @Input() paginationIdentifier: string;
-  @Input() showSelectionColumn: boolean;
+  @Input() showSelectionColumn = false;
+  @Input() striped = false;
   //To be deprecated
   @Input() viewMode: boolean;
 
@@ -187,52 +198,19 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
   });
 
   public readonly ViewType = ViewType;
+  public model = new TableModel();
   public paginationModel: PaginationModel;
   public searchFormControl = new FormControl('');
   public searchModel: string;
   public viewListAs: string;
 
   private static readonly PAGINATION_SIZE = 'PaginationSize';
-  private readonly _model = new TableModel();
-  private readonly _skeletonTableModel: TableModel = Table.skeletonModel(5, 5);
   private readonly _subscriptions = new Subscription();
 
-  public get numberOfColumns(): number {
-    return (
-      this._fields?.length +
-      (this.lastColumnTemplate ? 1 : 0) +
-      (this.showSelectionColumn ? 1 : 0) +
-      this.actions?.length
-    );
-  }
-
-  public get model(): TableModel {
-    return this.loading ? this._skeletonTableModel : this._model;
-  }
-
-  public get selectAllCheckbox(): boolean {
-    if (!this.model || this.loading) {
-      return false;
-    }
-
-    return (
-      !!this.model.totalDataLength && this.model.selectedRowsCount() === this.model.totalDataLength
-    );
-  }
-
-  public get selectAllCheckboxSomeSelected(): boolean {
-    if (!this.model || this.loading) {
-      return false;
-    }
-
-    const selectedCount = this.model.selectedRowsCount();
-    return selectedCount > 0 && selectedCount < this.model.totalDataLength;
-  }
-
   public get selectedItems(): T[] {
-    return this._model.data.reduce(
+    return this.model.data.reduce(
       (items: T[], _, index: number) =>
-        this._model.isRowSelected(index) ? [...items, this.items[index]] : [...items],
+        this.model.isRowSelected(index) ? [...items, this.items[index]] : [...items],
       []
     );
   }
@@ -242,8 +220,7 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
     private readonly iconService: IconService,
     private readonly logger: NGXLogger,
     private readonly translateService: TranslateService,
-    private readonly viewContentService: ViewContentService,
-    private readonly cd: ChangeDetectorRef
+    private readonly viewContentService: ViewContentService
   ) {
     this.viewListAs = localStorage.getItem('viewListAs') || 'table';
 
@@ -268,10 +245,7 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
           } else {
             //to remove when deprecating viewMode 'tile'
             this.searchModel = searchString ?? '';
-            this._model.data = this.filterPipe.transform(
-              this._completeDataSource,
-              this.searchModel
-            );
+            this.model.data = this.filterPipe.transform(this._completeDataSource, this.searchModel);
           }
         })
     );
@@ -279,24 +253,6 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
 
   public ngOnDestroy(): void {
     this._subscriptions.unsubscribe();
-  }
-
-  public onSelectAll(select = true): void {
-    this._model.selectAll(select);
-    if (select) {
-      return;
-    }
-    this._model.selectAll(false);
-  }
-
-  public onDeselectRow(event: {model: TableModel; deselectedRowIndex: number}): void {
-    const {deselectedRowIndex} = event;
-    this._model.selectRow(deselectedRowIndex, false);
-  }
-
-  public onSelectRow(event: {model: TableModel; selectedRowIndex: number}): void {
-    const {selectedRowIndex} = event;
-    this._model.selectRow(selectedRowIndex);
   }
 
   public onRowClick(index: number): void {
@@ -347,10 +303,6 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
       this.sort$.next(newState);
       this.sortChanged.emit(newState);
     });
-  }
-
-  public onToolbarCancel(): void {
-    this.onSelectAll(false);
   }
 
   public switchView(type: 'table' | 'tile'): void {
@@ -410,7 +362,7 @@ export class CarbonListComponent<T> implements OnInit, OnDestroy {
             ];
           }
 
-          this._model.header = !this.lastColumnTemplate
+          this.model.header = !this.lastColumnTemplate
             ? header
             : [
                 ...header,

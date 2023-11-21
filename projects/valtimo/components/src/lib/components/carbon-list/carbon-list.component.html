@@ -76,42 +76,31 @@
     </cds-overflow-menu>
   </ng-template>
 
-  <table *ngIf="(!viewMode || viewListAs === 'table') && !!obs.sort" cdsTable>
-    <thead
-      cdsTableHead
-      [model]="model"
-      [showSelectionColumn]="showSelectionColumn"
-      [selectAllCheckbox]="selectAllCheckbox"
-      [selectAllCheckboxSomeSelected]="selectAllCheckboxSomeSelected"
-      (sort)="onSort(model.header[$event])"
-      (selectAll)="onSelectAll()"
-      (deselectAll)="onSelectAll(false)"
-    ></thead>
+  <cds-table
+    *ngIf="(!viewMode || viewListAs === 'table') && !!obs.sort"
+    [enableSingleSelect]="enableSingleSelect"
+    [model]="model"
+    [showSelectionColumn]="showSelectionColumn"
+    [skeleton]="loading"
+    [striped]="striped"
+    (sort)="onSort(model.header[$event])"
+    (rowClick)="onRowClick($event)"
+  >
+    <tbody cdsTableBody>
+      <tr>
+        <td
+          [attr.colspan]="model.header.length + (showSelectionColumn ? 1 : 0)"
+          class="valtimo-carbon-list__no-results"
+        >
+          <ng-content></ng-content>
+        </td>
 
-    <tbody
-      *ngIf="model.totalDataLength; else noResults"
-      cdsTableBody
-      [model]="model"
-      [showSelectionColumn]="showSelectionColumn"
-      (rowClick)="onRowClick($event)"
-      (selectRow)="onSelectRow($event)"
-      (deselectRow)="onDeselectRow($event)"
-    ></tbody>
-
-    <ng-template #noResults>
-      <tbody cdsTableBody>
-        <tr>
-          <td [attr.colspan]="numberOfColumns" class="valtimo-carbon-list__no-results">
-            <ng-content></ng-content>
-          </td>
-
-          <td [attr.colspan]="numberOfColumns">
-            {{ 'list.noResults' | translate }}
-          </td>
-        </tr>
-      </tbody>
-    </ng-template>
-  </table>
+        <td [attr.colspan]="model.header.length + (showSelectionColumn ? 1 : 0)">
+          {{ 'list.noResults' | translate }}
+        </td>
+      </tr>
+    </tbody>
+  </cds-table>
 
   <div
     *ngIf="viewMode && viewListAs === 'tile'"

@@ -16,36 +16,35 @@
 
 <div class="main-content">
   <div class="container-fluid">
-    <valtimo-carbon-list
-      [fields]="tasks[currentTaskType].fields"
-      [header]="false"
-      [isSearchable]="true"
-      [items]="tasks[currentTaskType].tasks"
-      [lastColumnTemplate]="caseLink"
-      [pagination]="tasks[currentTaskType].pagination"
-      paginationIdentifier="taskList"
-      [viewMode]="true"
-      (paginationClicked)="paginationClicked($event, currentTaskType)"
-      (paginationSet)="paginationSet($event)"
-      (rowClicked)="rowOpenTaskClick($event)"
-      (sortChanged)="sortChanged($event)"
-    >
-      <cds-tabs
-        *ngIf="visibleTabs === null; else configuredTabs"
-        type="contained"
-        class="valtimo-carbon-list__tabs"
-        tabs
+      <valtimo-carbon-list
+        [fields]="tasks[currentTaskType].fields"
+        [header]="false"
+        [items]="tasks[currentTaskType].tasks"
+        [lastColumnTemplate]="caseLink"
+        [pagination]="tasks[currentTaskType].pagination"
+        paginationIdentifier="taskList"
+        [viewMode]="true"
+        (paginationClicked)="paginationClicked($event, currentTaskType)"
+        (paginationSet)="paginationSet($event)"
+        (rowClicked)="rowOpenTaskClick($event)"
+        (sortChanged)="sortChanged($event)"
       >
-        <cds-tab [heading]="'task-list.mine.title' | translate" (selected)="tabChange('mine')">
-        </cds-tab>
+        <cds-tabs
+          *ngIf="visibleTabs === null; else configuredTabs"
+          type="contained"
+          class="valtimo-carbon-list__tabs"
+          tabs
+        >
+          <cds-tab [heading]="'task-list.mine.title' | translate" (selected)="tabChange('mine')">
+          </cds-tab>
 
-        <cds-tab [heading]="'task-list.open.title' | translate" (selected)="tabChange('open')">
-        </cds-tab>
+          <cds-tab [heading]="'task-list.open.title' | translate" (selected)="tabChange('open')">
+          </cds-tab>
 
-        <cds-tab [heading]="'task-list.all.title' | translate" (selected)="tabChange('all')">
-        </cds-tab>
-      </cds-tabs>
-    </valtimo-carbon-list>
+          <cds-tab [heading]="'task-list.all.title' | translate" (selected)="tabChange('all')">
+          </cds-tab>
+        </cds-tabs>
+      </valtimo-carbon-list>
 
     <valtimo-task-detail-modal
       #taskDetail
