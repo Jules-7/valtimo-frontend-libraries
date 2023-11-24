@@ -205,7 +205,6 @@ export class DossierListComponent implements OnInit, OnDestroy {
         listFields,
         canHaveAssignee
       );
-
       return fieldsToReturn;
     }),
     tap((fields: ColumnConfig[]) => {
