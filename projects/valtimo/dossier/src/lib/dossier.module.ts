@@ -64,7 +64,7 @@ import {
   DropdownModule, FileUploaderModule,
   IconModule,
   LoadingModule,
-  ModalModule as CarbonModalModule,
+  ModalModule as CarbonModalModule, PaginationModule,
   SelectModule as CarbonSelectModule,
   TabsModule,
 } from 'carbon-components-angular';
@@ -179,6 +179,7 @@ export type TabsFactory = () => Map<string, object>;
     TabTranslatePipeModule,
     DialogModule,
     FileUploaderModule,
+    PaginationModule,
   ],
   exports: [DossierListComponent, DossierDetailComponent],
 })
